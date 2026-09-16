@@ -1,4 +1,4 @@
-/* 함 제작도면 작성기 — 오프라인 캐시 */
+/* 함 제작도면 작성기 — 오프라인 캐시 (빌드가 버전을 갱신합니다) */
 const V = "hamdo-d12b4a20";
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon-180.png", "./icon-512.png"];
 const EXT = [
@@ -27,7 +27,8 @@ self.addEventListener("fetch", e => {
   /* 화면(HTML)은 네트워크 먼저 — 수정본이 바로 반영되게 */
   if (req.mode === "navigate") {
     e.respondWith(fetch(req).then(r => {
-      caches.open(V).then(c => c.put("./index.html", r.clone()));
+      const cp = r.clone();
+      caches.open(V).then(c => c.put("./index.html", cp));
       return r;
     }).catch(() => caches.match("./index.html")));
     return;

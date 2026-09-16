@@ -1,12 +1,33 @@
-# 아티팩트 소스 → 깃허브 페이지용 정식 웹 패키지로 빌드
-# (viewport 메타 · PWA 매니페스트 · 서비스워커 · 아이콘)
-import io, os, re, zlib, struct, hashlib
+# -*- coding: utf-8 -*-
+"""
+함 제작도면 작성기 — 배포 빌드
 
-SRC = r"C:\Users\ujuda\Downloads\cabinet-drawing.html"
-OUT = r"C:\Users\ujuda\Downloads\함도면-웹배포"
-os.makedirs(OUT, exist_ok=True)
+  src/app.html  (본문 소스)  →  index.html (배포본)
+                             +  manifest.webmanifest / sw.js / 아이콘
+
+index.html 을 직접 고치지 마세요. src/app.html 만 고치고 이 스크립트를 돌립니다.
+  python build.py
+
+index.html 에는 모바일 viewport 메타가 반드시 있어야 합니다.
+없으면 휴대폰이 화면 폭을 980px 로 가정하고 축소해 글자가 아주 작게 보입니다.
+이 스크립트가 자동으로 넣습니다.
+"""
+import io, os, zlib, struct, hashlib, sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+SRC  = os.path.join(HERE, "src", "app.html")
+OUT  = HERE
+
+if not os.path.exists(SRC):
+    print("소스가 없습니다: %s" % SRC); sys.exit(1)
 
 body = io.open(SRC, encoding="utf-8").read()
+
+for bad in ("<<<<<<<", ">>>>>>>", "\n=======\n"):
+    if bad in body:
+        print("소스에 병합 충돌 마커가 남아 있습니다: %r — 먼저 정리하세요." % bad)
+        sys.exit(1)
+
 ver = hashlib.sha1(body.encode("utf-8")).hexdigest()[:8]
 
 # ── 아이콘 (PNG 직접 생성) ────────────────────────────────────
@@ -59,7 +80,7 @@ io.open(os.path.join(OUT, "manifest.webmanifest"), "w", encoding="utf-8").write(
 """)
 
 # ── 서비스워커 (오프라인) ──────────────────────────────────────
-io.open(os.path.join(OUT, "sw.js"), "w", encoding="utf-8").write("""/* 함 제작도면 작성기 — 오프라인 캐시 */
+io.open(os.path.join(OUT, "sw.js"), "w", encoding="utf-8").write("""/* 함 제작도면 작성기 — 오프라인 캐시 (빌드가 버전을 갱신합니다) */
 const V = "hamdo-%s";
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon-180.png", "./icon-512.png"];
 const EXT = [
@@ -88,7 +109,8 @@ self.addEventListener("fetch", e => {
   /* 화면(HTML)은 네트워크 먼저 — 수정본이 바로 반영되게 */
   if (req.mode === "navigate") {
     e.respondWith(fetch(req).then(r => {
-      caches.open(V).then(c => c.put("./index.html", r.clone()));
+      const cp = r.clone();
+      caches.open(V).then(c => c.put("./index.html", cp));
       return r;
     }).catch(() => caches.match("./index.html")));
     return;
@@ -104,12 +126,12 @@ self.addEventListener("fetch", e => {
 });
 """ % ver)
 
-# ── index.html (정식 문서 껍데기) ──────────────────────────────
+# ── index.html ────────────────────────────────────────────────
 head = """<!doctype html>
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<!-- 모바일에서 실제 화면 폭으로 그리게 한다. 이게 없으면 980px 로 가정하고 축소되어 글씨가 아주 작아진다. -->
+<!-- 모바일에서 실제 화면 폭으로 그리게 한다. 없으면 980px 로 가정하고 축소되어 글씨가 아주 작아진다. -->
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#14202b">
 <meta name="description" content="전기·통신 함체 제작도면을 현장에서 바로 작성하고 공장에 전달합니다.">
@@ -144,6 +166,6 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
 """
 io.open(os.path.join(OUT, "index.html"), "w", encoding="utf-8").write(head + body + tail)
 
-for f in sorted(os.listdir(OUT)):
-    print("  %-26s %8d bytes" % (f, os.path.getsize(os.path.join(OUT, f))))
-print("\n빌드 버전: %s" % ver)
+print("빌드 완료 (버전 %s)" % ver)
+for f in ["index.html", "manifest.webmanifest", "sw.js", "icon-180.png", "icon-512.png"]:
+    print("  %-22s %8d bytes" % (f, os.path.getsize(os.path.join(OUT, f))))
