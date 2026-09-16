@@ -1,0 +1,15 @@
+{
+  "name": "함 제작도면 작성기",
+  "short_name": "함도면",
+  "description": "전기·통신 함체 제작도면을 현장에서 바로 작성하고 공장에 전달합니다.",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#e7eaef",
+  "theme_color": "#14202b",
+  "icons": [
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

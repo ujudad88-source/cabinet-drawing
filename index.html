@@ -1,4 +1,31 @@
 <<<<<<< HEAD
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<!-- 모바일에서 실제 화면 폭으로 그리게 한다. 이게 없으면 980px 로 가정하고 축소되어 글씨가 아주 작아진다. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14202b">
+<meta name="description" content="전기·통신 함체 제작도면을 현장에서 바로 작성하고 공장에 전달합니다.">
+<meta name="format-detection" content="telephone=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="함도면">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-512.png" sizes="512x512" type="image/png">
+<style>
+  :root{color-scheme:light dark}
+  html,body{margin:0;padding:0}
+  img{max-width:100%}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+=======
+<<<<<<< HEAD
+>>>>>>> 46c9f51e29e801b6db831070de41c34c736fc5f5
 <title>함 제작도면 작성기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -159,6 +186,27 @@ section.fold>*:not(.shd){display:none!important}
 .alignbar button{font:inherit;font-size:12.5px;padding:6px 9px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);cursor:pointer}
 .alignbar .lbl{font-size:12px;color:var(--ink-2);align-self:center;margin-right:2px;font-weight:600}
 .prow .ck{flex:none;width:19px;height:19px;accent-color:var(--accent);margin:0}
+/* 도면 전체화면 */
+body.fs{overflow:hidden}
+body.fs .top,body.fs .colB,body.fs .bar,body.fs #sheetTabs{display:none!important}
+body.fs .wrap{max-width:none;padding:0}
+body.fs .cols{display:block}
+body.fs .colA{position:static}
+body.fs .sheetbox{position:fixed;inset:0;z-index:70;margin:0;border:0;border-radius:0;
+  padding:6px calc(6px + env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;gap:0}
+body.fs .sheet{flex:1;min-height:0}
+body.fs .sheethint,body.fs .dimbar,body.fs #viewChips{flex:none}
+/* 3D 미리보기 */
+.stage3d{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  perspective:1600px;background:linear-gradient(180deg,#f7f9fb,#e9eef3);overflow:hidden}
+.box3d{position:relative;transform-style:preserve-3d;transition:none}
+.f3{position:absolute;left:50%;top:50%;background:#fff;box-sizing:border-box;
+  border:1px solid #101820;overflow:hidden;backface-visibility:visible}
+.f3 svg{display:block;width:100%;height:100%}
+.f3.dim{background:#eef2f6}
+.hint3d{position:absolute;left:10px;bottom:8px;font-size:11.5px;color:var(--ink-3);
+  background:rgba(255,255,255,.8);padding:4px 8px;border-radius:6px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
@@ -184,6 +232,7 @@ section.fold>*:not(.shd){display:none!important}
       <button class="btn gho" id="zIn" aria-label="확대">+</button>
       <span id="zVal">100%</span>
       <span style="flex:1"></span>
+      <button class="btn gho" id="btnFs" title="도면 전체화면">⛶</button>
       <button class="btn gho" id="btnUndo" disabled>↩ 되돌리기</button>
     </div>
     <div class="sheet" id="sheet"><div id="sheetInner"></div></div>
@@ -338,6 +387,7 @@ section.fold>*:not(.shd){display:none!important}
     <div class="chips" id="outFmt">
       <button class="chip" data-fmt="png" aria-pressed="true">이미지 (PNG)</button>
       <button class="chip" data-fmt="pdf" aria-pressed="false">PDF</button>
+      <button class="chip" data-fmt="svg" aria-pressed="false">SVG (벡터)</button>
     </div>
     <div class="shd" style="margin:14px 0 7px"><h2 style="cursor:default">범위</h2></div>
     <div class="chips" id="outScope">
@@ -360,6 +410,7 @@ section.fold>*:not(.shd){display:none!important}
     <div class="mhd"><h3>메뉴</h3><button class="btn gho" id="menuClose">닫기</button></div>
     <div class="pal" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr))">
       <button data-menu="rev">🕐 리비전 기록</button>
+      <button data-menu="file">💾 작업 파일 (백업·이전)</button>
       <button data-menu="log">📤 발송 이력</button>
       <button data-menu="pdef">🔧 부속 기본값</button>
       <button data-menu="tpl">📐 함 템플릿</button>
@@ -389,6 +440,27 @@ section.fold>*:not(.shd){display:none!important}
   </div>
 </div>
 
+<<<<<<< HEAD
+<div class="modal" id="filem" hidden>
+  <div class="mbox">
+    <div class="mhd"><h3>작업 파일</h3><button class="btn gho" id="fileClose">닫기</button></div>
+    <p style="margin:0 0 12px;font-size:12.5px;color:var(--ink-3);line-height:1.65">
+      브라우저 저장소는 기록 삭제·저장공간 정리로 <b>지워질 수 있습니다.</b>
+      중요한 작업은 파일로 내보내 두세요. 다른 기기로 옮기거나 동료에게 넘길 때도 이 파일을 씁니다.</p>
+    <div class="row" style="margin:0">
+      <button class="btn pri" id="fileExp" style="flex:1">내보내기 (.json)</button>
+      <button class="btn" id="fileImpBtn" style="flex:1">불러오기</button>
+    </div>
+    <input type="file" id="fileImp" accept=".json,application/json" hidden>
+    <p style="margin:14px 0 0;font-size:12.5px;color:var(--ink-3);line-height:1.65">
+      불러오면 <b>현재 작업을 덮어씁니다.</b> 지금 것을 남기려면 먼저 내보내기를 하세요.<br>
+      함만 가져오려면 아래를 쓰세요.</p>
+    <div class="row"><button class="btn" id="fileMerge" style="flex:1">파일의 함만 현재 작업에 추가</button></div>
+  </div>
+</div>
+
+=======
+>>>>>>> 46c9f51e29e801b6db831070de41c34c736fc5f5
 <div class="modal" id="pdefm" hidden>
   <div class="mbox">
     <div class="mhd"><h3>부속 기본값</h3><button class="btn gho" id="pdefClose">닫기</button></div>
@@ -478,6 +550,10 @@ const VLABEL={iso:"외형도",front:"정면도",left:"좌측면도",right:"우�
 const today=new Date().toISOString().slice(0,10);
 document.getElementById("sheet").addEventListener("wheel",ev=>{
   ev.preventDefault();
+  if(sheetMode==="3d"){
+    zoom3=Math.max(.35,Math.min(4,zoom3*(ev.deltaY<0?1.12:1/1.12)));
+    drawSheet(); return;
+  }
   if(ev.ctrlKey||ev.metaKey||Math.abs(ev.deltaY)>2){      /* 휠 = 커서 위치 기준 확대 */
     zoomAt(zoom*(ev.deltaY<0?1.14:1/1.14),ev.clientX,ev.clientY);
   }
@@ -549,7 +625,7 @@ function undo(){
   const b=$("#btnUndo"); if(b)b.disabled=!hist.length;
   save(); render(); setStat("되돌렸습니다");
 }
-const SHEETTABS=[["dw","도면"],["wk","가공표"],["sm","집계표"]];
+const SHEETTABS=[["dw","도면"],["3d","3D 미리보기"],["wk","가공표"],["sm","집계표"]];
 
 /* ══════════ 도면 엔진 (단위 = mm, 용지 A4 가로 297×210) ══════════ */
 const FF="Malgun Gothic, Apple SD Gothic Neo, Noto Sans KR, sans-serif";
@@ -1187,6 +1263,7 @@ function curSVG(px){
   const h=HILITE; if(px)HILITE=null;          /* 저장·인쇄본에는 선택 표시를 넣지 않는다 */
   try{
     if(sheetMode==="sm")return summarySVG(S,S.cabs,px);
+  if(sheetMode==="3d")return sheetSVG(cab(),S,S.views,px);
     if(sheetMode==="wk")return worksSVG(S,cab(),px);
     return sheetSVG(cab(),S,S.views,px);
   }finally{HILITE=h;}
@@ -1255,9 +1332,60 @@ function calcRevDiff(){
       REVDIFF.add(p.id);
   });
 }
+/* ── 3D 미리보기 ───────────────────────────────────────────
+   무거운 3D 라이브러리 없이 CSS 3D 로 여섯 면을 세운다.
+   각 면에는 실제 도면의 그 면을 그대로 붙인다.                */
+let rot={x:-16,y:-26}, zoom3=1;
+function face3D(c,face){
+  const pd=faceDims(c,face);
+  const k=Math.max(pd.w,pd.h)/260;
+  const o=[];
+  const bands=secBands(c), cbs=(face==="front"||face==="back")?colBands(c):[{x0:0,x1:pd.w}];
+  const TR=Math.max(0,num(c.trim,0));
+  bands.forEach((b,i)=>{ if(i&&(face!=="top"&&face!=="bottom"))o.push(ln(0,b.y0,pd.w,b.y0,.6*k)); });
+  cbs.forEach((q,i)=>{ if(i)o.push(ln(q.x0,0,q.x0,pd.h,.6*k)); });
+  if(face==="front"&&TR>0)bands.forEach(b=>cbs.forEach(q=>{
+    if(b.h>2*TR&&q.w>2*TR)o.push(rc(q.x0+TR,b.y0+TR,q.w-2*TR,b.h-2*TR,.45*k));
+  }));
+  o.push(drawParts(c,[face],0,0,pd.w,pd.h,k,"v3d",{noDim:1,noLabel:1,solid:1}));
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${pd.w} ${pd.h}" preserveAspectRatio="none">${o.join("")}</svg>`;
+}
+function stage3D(c){
+  const host=$("#sheet");
+  const aw=Math.max(200,host.clientWidth), ah=Math.max(200,host.clientHeight||260);
+  const W=c.W,H=c.H,D=Math.max(1,c.D);
+  const s=Math.min(aw/(W+D*1.4),ah/(H+D*1.4))*.78*zoom3;
+  const w=W*s,h=H*s,d=D*s;
+  const F=(nm,cls,ww,hh,tr)=>`<div class="f3 ${cls}" style="width:${ww.toFixed(1)}px;height:${hh.toFixed(1)}px;`
+    +`transform:translate(-50%,-50%) ${tr}">${nm}</div>`;
+  const parts=[
+    F(face3D(c,"front"),"",w,h,`translateZ(${(d/2).toFixed(1)}px)`),
+    F(face3D(c,"back"),"",w,h,`rotateY(180deg) translateZ(${(d/2).toFixed(1)}px)`),
+    F(face3D(c,"right"),"",d,h,`rotateY(90deg) translateZ(${(w/2).toFixed(1)}px)`),
+    F(face3D(c,"left"),"",d,h,`rotateY(-90deg) translateZ(${(w/2).toFixed(1)}px)`),
+    F(face3D(c,"top"),"",w,d,`rotateX(90deg) translateZ(${(h/2).toFixed(1)}px)`),
+    F(face3D(c,"bottom"),"dim",w,d,`rotateX(-90deg) translateZ(${(h/2).toFixed(1)}px)`)
+  ].join("");
+  return `<div class="stage3d" id="stage3d">`
+    +`<div class="box3d" id="box3d" style="width:${w.toFixed(1)}px;height:${h.toFixed(1)}px;`
+    +`transform:rotateX(${rot.x}deg) rotateY(${rot.y}deg)">${parts}</div>`
+    +`<div class="hint3d">끌어서 돌리기 · 두 손가락/휠로 확대 · ${R(W)}×${R(H)}×${R(D)}</div></div>`;
+}
 function drawSheet(){
   const c=cab();
   calcRevDiff();
+  if(sheetMode==="3d"){                       /* 3D 는 확대·이동 대신 회전 */
+    const el=$("#sheetInner");
+    el.style.transform=""; el.style.height="100%";
+    $("#sheet").style.height=Math.max(260,Math.round(($("#sheet").clientWidth||360)*.72))+"px";
+    el.innerHTML=stage3D(c);
+    $("#zVal").textContent=Math.round(zoom3*100)+"%";
+    $("#totNote").textContent=`전체 세로 ${R(c.H)} = ${secLabel(c)}`;
+    $("#scaleInfo").textContent=`${R(c.W)}×${R(c.H)}×${R(c.D)}`;
+    return;
+  }
+  $("#sheet").style.height="";
+  $("#sheetInner").style.height="";
   $("#sheetInner").innerHTML=curSVG();
   applyZoom();
   $("#totNote").textContent=`전체 세로 ${R(c.H)} = ${secLabel(c)}`;
@@ -1431,6 +1559,12 @@ const pdist=()=>{const a=[...PTS.values()];return Math.hypot(a[0].x-a[1].x,a[0].
 const pmid=()=>{const a=[...PTS.values()];return{x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2};};
 $("#sheet").addEventListener("pointerdown",ev=>{
   PTS.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
+  if(sheetMode==="3d"){
+    if(PTS.size===2){pinch={d:pdist()||1,z:zoom3,is3d:1};ev.preventDefault();return;}
+    pan={x:ev.clientX,y:ev.clientY,rx:rot.x,ry:rot.y,is3d:1};
+    try{$("#sheet").setPointerCapture(ev.pointerId);}catch(e){}
+    ev.preventDefault();return;
+  }
   if(PTS.size===2){                                   /* 두 손가락 → 확대·축소 */
     drag=null;pan=null;
     pinch={d:pdist()||1,z:zoom};
@@ -1498,8 +1632,19 @@ $("#sheet").addEventListener("pointerdown",ev=>{
 $("#sheet").addEventListener("pointermove",ev=>{
   if(PTS.has(ev.pointerId))PTS.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
   if(pinch&&PTS.size>=2){
+    if(pinch.is3d){
+      zoom3=Math.max(.35,Math.min(4,pinch.z*(pdist()/pinch.d)));
+      drawSheet(); ev.preventDefault(); return;
+    }
     const m=pmid();
     zoomAt(pinch.z*(pdist()/pinch.d),m.x,m.y);
+    ev.preventDefault();return;
+  }
+  if(pan&&pan.is3d){
+    rot.y=pan.ry+(ev.clientX-pan.x)*.5;
+    rot.x=Math.max(-85,Math.min(85,pan.rx-(ev.clientY-pan.y)*.5));
+    const b=document.getElementById("box3d");
+    if(b)b.style.transform=`rotateX(${rot.x.toFixed(1)}deg) rotateY(${rot.y.toFixed(1)}deg)`;
     ev.preventDefault();return;
   }
   if(pan){
@@ -1675,13 +1820,21 @@ function outHint(){
   if(outFmt==="png")lines.push(outScope==="all"&&S.cabs.length>1
     ? `함 ${S.cabs.length}개의 도면을 각각 이미지로 만들어 ${S.cabs.length}장을 한 번에 보냅니다.`
     : "지금 화면에 보이는 시트 1장이 이미지로 만들어집니다. 카톡에 바로 붙습니다.");
+<<<<<<< HEAD
+  else if(outFmt==="svg")lines.push("지금 보는 시트를 벡터(SVG)로 만듭니다. 아무리 확대해도 선이 깨지지 않고 캐드·일러스트에서 열립니다.");
+=======
+>>>>>>> 46c9f51e29e801b6db831070de41c34c736fc5f5
   else lines.push(outScope==="all"
     ? `함 ${S.cabs.length}개의 도면과 가공표, 집계표까지 ${S.paper||"A4"} 여러 장 PDF로 묶입니다.`
     : `지금 보는 시트 1장을 ${S.paper||"A4"} PDF로 만듭니다.`);
   lines.push(canShare?"‘공유’를 누르면 카카오톡·메일 목록이 열립니다."
     :"이 환경에서는 공유창이 열리지 않을 수 있습니다. 그때는 ‘기기에 저장’ 후 카톡에서 첨부하세요.");
   $("#outHint").innerHTML=lines.map(esc).join("<br>");
+<<<<<<< HEAD
+  const one=outFmt==="svg"||(S.cabs.length<2&&outFmt==="png");
+=======
   const one=S.cabs.length<2&&outFmt==="png";
+>>>>>>> 46c9f51e29e801b6db831070de41c34c736fc5f5
   $("#outScope").querySelectorAll(".chip").forEach(b=>b.disabled=one);
   $("#outScope").style.opacity=one?".45":"1";
   $("#outScope").querySelectorAll(".chip")[1].textContent=
@@ -1703,6 +1856,15 @@ async function buildOut(){
     }
     const png=await toPNG(curSVG(2400),P.px/SHEET.w);
     return{files:[{blob:dataURLtoBlob(png),name:fileBase()+`_${S.paper||"A4"}.png`,type:"image/png"}],n:1};
+<<<<<<< HEAD
+  }
+  if(outFmt==="svg"){                          /* 진짜 벡터 — 확대해도 안 깨진다 */
+    const svg=curSVG();
+    const doc=`<?xml version="1.0" encoding="UTF-8"?>\n`+svg.replace("<svg ",`<svg width="${P.w}mm" height="${P.h}mm" `);
+    return{files:[{blob:new Blob([doc],{type:"image/svg+xml;charset=utf-8"}),
+      name:fileBase()+".svg",type:"image/svg+xml"}],n:1};
+=======
+>>>>>>> 46c9f51e29e801b6db831070de41c34c736fc5f5
   }
   if(!window.jspdf)throw new Error("PDF 모듈을 불러오지 못했습니다");
   const {jsPDF}=window.jspdf;
@@ -1907,6 +2069,49 @@ function applyDef(p){
   });
   return p;
 }
+<<<<<<< HEAD
+/* ── 작업 파일 내보내기 · 불러오기 ───────────────────────────
+   브라우저 저장소가 지워져도 이 파일만 있으면 그대로 복원된다. */
+function workName(){
+  const d=(S.date||today).replace(/-/g,"");
+  return ((S.site?S.site+"_":"")+"함도면_"+d).replace(/[\\/:*?"<>|]/g,"")+".json";
+}
+async function exportWork(){
+  const pack={app:"cabinet-drawing",ver:1,savedAt:new Date().toISOString(),data:S};
+  const blob=new Blob([JSON.stringify(pack,null,1)],{type:"application/json;charset=utf-8"});
+  const name=workName();
+  if(DL){
+    try{ await DL.save({filename:name,data:blob}); $("#filem").hidden=true; toast("작업 파일로 내보냈습니다"); return; }
+    catch(e){ if(e&&e.code==="declined")return; }
+  }
+  const u=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=u; a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(u),4000);
+  $("#filem").hidden=true; toast("작업 파일로 내보냈습니다");
+}
+function importWork(text,mode){
+  let pack;
+  try{ pack=JSON.parse(text); }catch(e){ toast("읽을 수 없는 파일입니다",true); return; }
+  const d=pack&&pack.data&&pack.data.cabs?pack.data:(pack&&pack.cabs?pack:null);
+  if(!d){ toast("함 도면 작업 파일이 아닙니다",true); return; }
+  pushHist();
+  if(mode==="merge"){
+    const add=JSON.parse(JSON.stringify(d.cabs||[]));
+    add.forEach(c=>{c.id=uid();(c.parts||[]).forEach(p=>p.id=uid());S.cabs.push(c);});
+    S.cur=S.cabs.length-1;
+    migrate(S); save(); render();
+    toast(`함 ${add.length}개를 추가했습니다`);
+  }else{
+    S=migrate(JSON.parse(JSON.stringify(d)));
+    S.cur=0; sheetMode="dw"; SEL.clear(); editing=null; HILITE=null;
+    save(); render();
+    toast(`불러왔습니다 — 함 ${S.cabs.length}개`);
+  }
+  $("#filem").hidden=true;
+}
+=======
+>>>>>>> 46c9f51e29e801b6db831070de41c34c736fc5f5
 function logLoad(){try{return JSON.parse(localStorage.getItem(LS+".log")||"[]");}catch(e){return[];}}
 function logPut(a){try{localStorage.setItem(LS+".log",JSON.stringify(a));}catch(e){}}
 function revLoad(){try{return JSON.parse(localStorage.getItem(LS+".rev")||"[]");}catch(e){return[];}}
@@ -1941,7 +2146,17 @@ document.addEventListener("click",async ev=>{
   if(t.dataset.iso){cab().iso=t.dataset.iso;sheetMode="dw";save();render();return;}
   if(t.id==="zIn"){zoomCenter(zoom*1.4);return;}
   if(t.id==="zOut"){zoomCenter(zoom/1.4);return;}
+<<<<<<< HEAD
+  if(t.id==="zFit"){if(sheetMode==="3d"){zoom3=1;rot={x:-16,y:-26};drawSheet();}else zoomFit();return;}
+  if(t.id==="btnFs"){
+    document.body.classList.toggle("fs");
+    const on=document.body.classList.contains("fs");
+    t.textContent=on?"✕":"⛶";
+    setTimeout(()=>{ if(sheetMode==="3d")drawSheet(); else applyZoom(); },30);
+    return;}
+=======
   if(t.id==="zFit"){zoomFit();return;}
+>>>>>>> 46c9f51e29e801b6db831070de41c34c736fc5f5
   if(t.id==="btnUndo"){undo();return;}
   if(t.dataset.dimact){
     const a=t.dataset.dimact,c=cab(),p=DIMSEL&&(c.parts||[]).find(x=>x.id===DIMSEL.id);
@@ -2175,6 +2390,10 @@ document.addEventListener("click",async ev=>{
     const m=t.dataset.menu; $("#menum").hidden=true;
     if(m==="rev")$("#revBtn").click();
     if(m==="tpl")$("#tplOpen").click();
+<<<<<<< HEAD
+    if(m==="file")$("#filem").hidden=false;
+=======
+>>>>>>> 46c9f51e29e801b6db831070de41c34c736fc5f5
     if(m==="pdef"){
       const all=defLoad(),ks=Object.keys(all);
       $("#pdefList").innerHTML=ks.length?ks.map(k=>{
@@ -2200,6 +2419,13 @@ document.addEventListener("click",async ev=>{
     return;}
   if(t.id==="helpClose"){$("#helpm").hidden=true;return;}
   if(t.id==="pdefClose"){$("#pdefm").hidden=true;return;}
+<<<<<<< HEAD
+  if(t.id==="fileClose"){$("#filem").hidden=true;return;}
+  if(t.id==="fileExp"){exportWork();return;}
+  if(t.id==="fileImpBtn"){$("#fileImp").dataset.mode="replace";$("#fileImp").click();return;}
+  if(t.id==="fileMerge"){$("#fileImp").dataset.mode="merge";$("#fileImp").click();return;}
+=======
+>>>>>>> 46c9f51e29e801b6db831070de41c34c736fc5f5
   if(t.dataset.pdefd){
     const all=defLoad(); delete all[t.dataset.pdefd]; defPut(all);
     $("#pdefm").hidden=true; toast("기본값을 지웠습니다"); return;}
@@ -2251,6 +2477,17 @@ document.addEventListener("input",ev=>{
   if(editing&&["pv","pf","ps","pcl","prw","pax","pay","pw","ph","pd","px","py","ptx"].includes(id)){readPart();return;}
 });
 document.addEventListener("change",ev=>{
+  if(ev.target.id==="fileImp"){
+    const f=ev.target.files&&ev.target.files[0];
+    const mode=ev.target.dataset.mode||"replace";
+    ev.target.value="";
+    if(!f)return;
+    if(mode==="replace"&&!confirm("현재 작업을 덮어씁니다. 계속할까요?"))return;
+    const fr=new FileReader();
+    fr.onload=()=>importWork(String(fr.result),mode);
+    fr.onerror=()=>toast("파일을 읽지 못했습니다",true);
+    fr.readAsText(f);
+    return;}
   if(ev.target.dataset&&ev.target.dataset.sel){
     ev.target.checked?SEL.add(ev.target.dataset.sel):SEL.delete(ev.target.dataset.sel);
     render();return;}
@@ -2277,6 +2514,19 @@ try{document.querySelectorAll("[data-fold]").forEach(h=>{
 });}catch(e){}
 migrate(S); render(); boot();
 </script>
+<<<<<<< HEAD
+
+<script>
+/* 오프라인 사용 — https 로 서비스될 때만 등록 */
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("./sw.js").catch(function () {});
+  });
+}
+</script>
+</body>
+</html>
+=======
 =======
 <title>함 제작도면 작성기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4479,3 +4729,4 @@ try{document.querySelectorAll("[data-fold]").forEach(h=>{
 migrate(S); render(); boot();
 </script>
 >>>>>>> 34b1ff4c133b1e32c110a9789892265c467fa5e1
+>>>>>>> 46c9f51e29e801b6db831070de41c34c736fc5f5
