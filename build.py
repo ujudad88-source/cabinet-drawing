@@ -63,8 +63,8 @@ icon(os.path.join(OUT, "icon-512.png"), 512)
 
 # ── 매니페스트 ────────────────────────────────────────────────
 io.open(os.path.join(OUT, "manifest.webmanifest"), "w", encoding="utf-8").write("""{
-  "name": "함 제작도면 작성기",
-  "short_name": "함도면",
+  "name": "광전기통신 영업 지원",
+  "short_name": "광전기통신 영업 지원",
   "description": "전기·통신 함체 제작도면을 현장에서 바로 작성하고 공장에 전달합니다.",
   "lang": "ko",
   "start_url": "./",
@@ -140,7 +140,7 @@ head = """<!doctype html>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <!-- default : 상태바가 화면을 덮지 않는다 (black-translucent 는 상단 제목을 가림) -->
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="함도면">
+<meta name="apple-mobile-web-app-title" content="광전기통신 영업 지원">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-512.png" sizes="512x512" type="image/png">
