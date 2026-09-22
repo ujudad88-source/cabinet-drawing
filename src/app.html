@@ -199,8 +199,113 @@ body.fs .sheethint,body.fs .dimbar,body.fs #viewChips{flex:none}
 .gcell:hover,.gcell:focus-visible{background:var(--accent-soft)}
 .gadd{font:inherit;font-size:12px;border:1px dashed var(--line);background:transparent;color:var(--ink-3);border-radius:6px;cursor:pointer;padding:4px 9px}
 .gaddc{align-self:stretch;line-height:1.25}
+/* 홈 · 랙 */
+body:not(.in-app) .wrap,body:not(.in-app) .bar{display:none!important}
+body.in-app #home,body.in-app #rack{display:none!important}
+#home,#rack{min-height:100%;padding-inline:18px;padding-block:calc(34px + env(safe-area-inset-top)) 40px}
+.hwrap{max-width:720px;margin:0 auto;display:grid;gap:16px}
+.hbrand{display:flex;align-items:center;gap:12px}
+.hbrand h1{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:0}
+.hbrand .sub{font-size:11.5px;color:var(--ink-3);letter-spacing:.08em;text-transform:uppercase;font-family:var(--mono)}
+.hlead{margin:8px 0 0;font-size:17px;font-weight:600;color:var(--ink-2)}
+.htiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.htile{font:inherit;text-align:left;cursor:pointer;display:grid;gap:6px;align-content:start;
+  background:var(--panel);color:var(--ink);border:1.5px solid var(--line);border-radius:14px;padding:18px 18px 16px;
+  transition:border-color .15s,transform .15s}
+.htile:hover,.htile:focus-visible{border-color:var(--accent);outline:none;transform:translateY(-1px)}
+.htile svg{width:120px;height:90px;color:var(--ink);margin-bottom:4px}
+.htile b{font-size:19px;letter-spacing:-.02em}
+.htile span{font-size:13.5px;color:var(--ink-2);line-height:1.55}
+.htile em{font-style:normal;font-weight:700;font-size:14px;color:var(--accent);margin-top:6px}
+.htile em.soon{color:var(--ink-3);font-weight:600;font-size:12px;border:1px dashed var(--line);border-radius:999px;padding:2px 10px;justify-self:start}
+.hresume{font:inherit;cursor:pointer;text-align:left;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+  border-radius:10px;padding:11px 14px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;font-weight:600}
+.hresume small{font-weight:400;color:var(--ink-3);font-size:12.5px}
+.hresume:hover,.hresume:focus-visible{border-color:var(--blue);outline:none}
+.hfoot{font-size:12.5px;color:var(--ink-3);margin:0}
+.rackplan{display:grid;grid-template-columns:170px 1fr;gap:18px;align-items:start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+@media(max-width:520px){.rackplan{grid-template-columns:1fr}.rackart{max-width:170px;margin:0 auto}}
+.rackart{width:100%;height:auto;color:var(--ink)}
+.rackplan ul{margin:0;padding-left:18px;font-size:14px;color:var(--ink-2);line-height:1.7}
+.rackplan li b{color:var(--ink)}
+/* 카바 열기 — 눈에 띄게 */
+.zoombar #btnDoor{background:var(--accent);border:1.5px solid var(--accent);color:#fff;font-weight:700;font-size:13px;
+  padding:5px 13px;border-radius:999px;box-shadow:0 2px 10px rgba(212,87,11,.35);animation:doorPulse 1.8s ease-out 3}
+.zoombar #btnDoor.open{background:var(--panel);color:var(--accent);animation:none;box-shadow:none}
+@keyframes doorPulse{0%{box-shadow:0 0 0 0 rgba(212,87,11,.55)}100%{box-shadow:0 0 0 12px rgba(212,87,11,0)}}
+/* 카바 절곡 깊이 */
+.cdw{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink-3)}
+.cdw input{width:58px;font:inherit;font-family:var(--mono);font-size:14px;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--panel-2);color:var(--ink);text-align:right}
+.cdw em{font-style:normal}
+.cdw .btn{padding:2px 8px;border:1px solid var(--line);border-radius:999px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
+
+<div id="home">
+  <div class="hwrap">
+    <div class="hbrand"><div class="mark" aria-hidden="true"></div>
+      <div><h1>함 제작도면 작성기</h1><div class="sub">Sheet metal enclosure · A4 / mm</div></div></div>
+    <p class="hlead">무엇을 하시겠어요?</p>
+    <div class="htiles">
+      <button class="htile" id="goDraw" type="button">
+        <svg viewBox="0 0 120 90" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="34,20 78,20 70,12 26,12"/><polygon points="34,20 34,80 26,72 26,12"/>
+          <rect x="34" y="20" width="44" height="60"/><line x1="34" y1="70" x2="78" y2="70"/></g>
+          <g fill="none" stroke="currentColor" stroke-width="1.2"><rect x="38" y="24" width="36" height="42"/>
+          <rect x="48" y="27" width="16" height="4"/><rect x="44" y="38" width="24" height="24" stroke-dasharray="3 2"/></g>
+          <g stroke="currentColor" stroke-width="1"><line x1="88" y1="20" x2="88" y2="80"/><line x1="85" y1="20" x2="91" y2="20"/><line x1="85" y1="80" x2="91" y2="80"/></g></svg>
+        <b>손도면 제작</b>
+        <span>치수와 부속만 넣으면 외형도·정면도·전개도·가공표가 나옵니다</span>
+        <em>새로 시작 →</em>
+      </button>
+      <button class="htile" id="goRack" type="button">
+        <svg viewBox="0 0 120 90" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="36" y="8" width="48" height="76"/></g>
+          <g stroke="currentColor" stroke-width="1.2" fill="none">
+          <rect x="41" y="14" width="38" height="8"/><rect x="41" y="25" width="38" height="8"/>
+          <rect x="41" y="36" width="38" height="14"/><rect x="41" y="53" width="38" height="8"/></g>
+          <g fill="currentColor"><circle cx="45" cy="18" r="1.3"/><circle cx="49" cy="18" r="1.3"/><circle cx="53" cy="18" r="1.3"/><circle cx="45" cy="29" r="1.3"/><circle cx="49" cy="29" r="1.3"/></g>
+          <g stroke="currentColor" stroke-width=".8"><line x1="36" y1="66" x2="84" y2="66"/><line x1="36" y1="72" x2="84" y2="72"/><line x1="36" y1="78" x2="84" y2="78"/></g></svg>
+        <b>캐비닛 랙 실장</b>
+        <span>19인치 랙에 장비를 U 단위로 배치한 실장도</span>
+        <em class="soon">개발 예정</em>
+      </button>
+    </div>
+    <button class="hresume" id="goResume" type="button" hidden>↺ 직전 작업 이어서 하기 <small id="homeResumeTxt"></small></button>
+    <p class="hfoot">손도면 제작은 항상 빈 상태로 시작합니다. 직전 작업은 위 버튼이나 메뉴의 보관함·작업 파일에서 불러올 수 있습니다.</p>
+  </div>
+</div>
+
+<div id="rack" hidden>
+  <div class="hwrap">
+    <button class="btn gho" id="rackBack" type="button">← 홈</button>
+    <h1 style="font-size:22px;margin:8px 0 4px">캐비닛 랙 실장</h1>
+    <p class="hlead" style="margin-bottom:14px">새로 개발할 기능입니다. 아래는 계획 중인 화면 구성입니다.</p>
+    <div class="rackplan">
+      <svg viewBox="0 0 160 250" aria-hidden="true" class="rackart">
+        <rect x="20" y="8" width="120" height="234" fill="none" stroke="currentColor" stroke-width="2.5"/>
+        <g font-family="IBM Plex Mono,monospace" font-size="7" fill="currentColor">
+          <text x="4" y="22">42U</text><text x="4" y="238">1U</text></g>
+        <g fill="none" stroke="currentColor" stroke-width="1.4">
+          <rect x="28" y="16" width="104" height="11"/><rect x="28" y="30" width="104" height="11"/>
+          <rect x="28" y="44" width="104" height="22"/><rect x="28" y="69" width="104" height="11"/>
+          <rect x="28" y="140" width="104" height="40"/><rect x="28" y="206" width="104" height="30"/></g>
+        <g font-family="IBM Plex Sans KR,sans-serif" font-size="7.5" fill="currentColor">
+          <text x="33" y="24">패치패널 24P</text><text x="33" y="38">패치패널 24P</text>
+          <text x="33" y="57">L2 스위치 48P</text><text x="33" y="77">케이블 정리대</text>
+          <text x="33" y="162">선반 · 광단자함</text><text x="33" y="224">PDU · 전원</text></g>
+      </svg>
+      <ul>
+        <li><b>랙 규격</b> — 19인치 · 높이 U(예: 22U / 42U) · 깊이</li>
+        <li><b>장비 배치</b> — 패치패널·스위치·광단자함·선반·PDU를 U 단위로 끌어 놓기</li>
+        <li><b>전면 / 후면 실장도</b> — 빈 U, 케이블 정리대 자동 표시</li>
+        <li><b>장비 목록표</b> — 품명·U·수량 집계, 도면과 함께 PDF</li>
+        <li><b>함과 연결</b> — 손도면 제작의 함 치수 안에 랙이 들어가는지 확인</li>
+      </ul>
+    </div>
+    <p class="hfoot">실제로 쓰시는 랙 실장도 예시나 장비 목록을 주시면 이 화면을 그대로 만들겠습니다.</p>
+  </div>
+</div>
 
 <div class="wrap">
   <div class="top">
@@ -209,6 +314,7 @@ body.fs .sheethint,body.fs .dimbar,body.fs #viewChips{flex:none}
       <h1>함 제작도면 작성기</h1>
       <div class="sub">Sheet metal enclosure · A4 / mm</div>
     </div>
+    <button class="btn gho" id="homeBtn" aria-label="홈">⌂ 홈</button>
     <button class="btn gho" id="menuBtn" aria-label="메뉴">⋯ 메뉴</button>
     <button id="revBtn" hidden></button><button id="libBtn" hidden></button>
   </div>
@@ -224,9 +330,10 @@ body.fs .sheethint,body.fs .dimbar,body.fs #viewChips{flex:none}
       <button class="btn gho" id="zIn" aria-label="확대">+</button>
       <span id="zVal">100%</span>
       <span style="flex:1"></span>
-      <button class="btn gho" id="btnDoor" hidden>카바 열기</button>
+      <button class="btn" id="btnDoor" hidden>🚪 카바 열기</button>
       <button class="btn gho" id="btnFs" title="도면 전체화면">⛶</button>
       <button class="btn gho" id="btnUndo" disabled>↩ 되돌리기</button>
+      <button class="btn gho" id="btnReset" title="처음 상태로">⟲ 초기화</button>
     </div>
     <div class="sheet" id="sheet"><div id="sheetInner"></div></div>
     <div class="dimbar" id="dimBar" hidden></div>
@@ -268,7 +375,7 @@ body.fs .sheethint,body.fs .dimbar,body.fs #viewChips{flex:none}
       <button class="chip" data-mk="all">함 전체</button>
       <button class="chip" data-mk="body">내함만</button>
       <button class="chip" data-mk="cover">카바만</button>
-      <span class="f" id="fCD" style="width:120px" hidden><input id="cCD" inputmode="numeric" placeholder="카바 절곡 깊이" aria-label="카바 절곡 깊이"></span>
+      <span class="cdw" id="fCD" hidden><label for="cCD">카바 절곡 깊이</label><input id="cCD" inputmode="numeric"><em>mm</em><button class="btn gho" id="cdHelp" type="button" aria-label="절곡 깊이 설명">?</button></span>
     </div>
     <div class="row">
       <span style="font-size:11px;color:var(--ink-3)">카바 경첩</span>
@@ -280,7 +387,6 @@ body.fs .sheethint,body.fs .dimbar,body.fs #viewChips{flex:none}
       <span style="font-size:11px;color:var(--ink-3)">외형도 방향</span>
       <button class="chip" id="isoL" data-iso="left">◀ 좌측면 보임</button>
       <button class="chip" id="isoR" data-iso="right">우측면 보임 ▶</button>
-      <label class="chk"><input type="checkbox" id="cBC"> 단 좌우 마감카바</label>
     </div>
     <div class="row">
       <button class="btn gho" id="dupCab">현재 함 복제</button>
@@ -604,7 +710,17 @@ function seed(){
   ];
   return{site:"",drawer:"",date:today,no:"",paper:"A4",cabs:[c],cur:0,views:["iso","front","left","right"]};
 }
-let S=seed(), sheetMode="dw", editing=null, HILITE=null, faceFilter="", SNAP=null, DIMSEL=null;
+/* 초기화 상태 — 부속 없는 본체 하나 (마이그레이션은 실행 시점에) */
+function blankState(){
+  const c=newCab("새 함");
+  c.secs=[{n:"본체",h:800}]; c.parts=[]; c.memos=[]; syncH(c);
+  return{site:"",drawer:"",date:today,no:"",paper:"A4",cabs:[c],cur:0,views:["iso","front","left","right"]};
+}
+function hasWork(st){
+  return !!(st&&st.cabs&&st.cabs.length&&(st.cabs.length>1||st.site||st.cabs.some(c=>(c.parts||[]).length||(c.memos||[]).length)));
+}
+let LAST=null;                               /* 직전 작업 (홈의 "이어서 하기") */
+let S=blankState(), sheetMode="dw", editing=null, HILITE=null, faceFilter="", SNAP=null, DIMSEL=null;
 let REVDIFF=new Set(), partQ="";
 const SEL=new Set();                       /* 다중 선택 (정렬·균등 배치용) */
 let toastT=0;
@@ -1015,16 +1131,9 @@ function panelView(face,opt){
       }));
       o.push(tx(x+pd.w/2,y+pd.h/2,"개구부 — 카바 별도 제작",2.8*k,"middle"));
     }
-    if(face==="front"&&c._scope!=="body"){          /* 카바 경첩 위치 */
-      const hg=c.hinge||"left";
-      bands.forEach(b=>cbs.forEach(q=>{
-        const xs=[];
-        if(hg==="left"||hg==="double")xs.push(q.x0);
-        if(hg==="right"||hg==="double")xs.push(q.x1);
-        xs.forEach(xx=>[.18,.82].forEach(r=>
-          o.push(rc(x+xx-1.1*k,y+b.y0+b.h*r-3*k,2.2*k,6*k,.35*k,null,"#fff"))));
-        if(hg==="double")o.push(ln(x+q.x0+q.w/2,y+b.y0,x+q.x0+q.w/2,y+b.y1,.45*k));
-      }));
+    if(face==="front"&&c._scope!=="body"&&(c.hinge||"left")==="double"){  /* 양개 : 가운데 맞닿는 선 */
+      bands.forEach(b=>cbs.forEach(q=>
+        o.push(ln(x+q.x0+q.w/2,y+b.y0,x+q.x0+q.w/2,y+b.y1,.45*k))));
     }
     if(face==="front"&&TR>0&&c._scope!=="body"){    /* 전면 테두리(카바) — 칸마다 */
       bands.forEach(b=>cbs.forEach(q=>{
@@ -1108,12 +1217,6 @@ function vIso(c,cw,ch,long){
       o.push(ln(bx,by+b.y0,bx+W,by+b.y0,.3*k,hid));    // 배면 경계 (가려짐)
       o.push(ln(hx,fy+b.y0,hv,by+b.y0,.3*k,hid));      // 가려지는 측면 경계
     }
-    if(c.bcov&&multi&&i){                              /* 단 좌·우 마감카바 (타공후 부착) */
-      o.push(ln(vx,fy+b.y0,vbx,by+b.y1,.3*k));
-      o.push(ln(vx,fy+b.y1,vbx,by+b.y0,.3*k));
-      o.push(ln(hx,fy+b.y0,hv,by+b.y1,.25*k,hid));
-      o.push(ln(hx,fy+b.y1,hv,by+b.y0,.25*k,hid));
-    }
     if(multi&&b.n)o.push(tx(vx+(L?-2.5*k:2.5*k),fy+(b.y0+b.y1)/2,b.n,2.3*k,L?"end":"start"));
   });
   /* ── 보이는 면의 부속 (정면 + 드러난 측면 + 상판) ── */
@@ -1138,8 +1241,7 @@ function vIso(c,cw,ch,long){
   bands.forEach(b=>o.push(dimV(fy+b.y0,fy+b.y1,dx0-TD*k,fx,k)));
   if(multi)o.push(dimV(fy,fy+TH,dx0-TT*k,dx0-(TD+2)*k,k));
   o.push(tx(fx+W/2,fy+TH+6*k,c._scope==="body"?"내함 — 카바 별도 제작":c._scope==="cover"?`카바 단품 · 절곡 깊이 ${R(D)}`:(TR>0?`전면 테두리 ${R(TR)}`:"전면 테두리 없음"),2.4*k,"middle"));
-  if(multi&&c.bcov)o.push(tx(fx+W/2,fy+TH+11*k,"타공후 카바부착 좌,우",2.4*k,"middle"));
-  o.push(tx(fx+W/2,fy+TH+(multi&&c.bcov?16:11)*k,"파선 = 가려진 면 · 내부 부착 부속",2.2*k,"middle"));
+  o.push(tx(fx+W/2,fy+TH+11*k,"파선 = 가려진 면 · 내부 부착 부속",2.2*k,"middle"));
   return{s:F.s,w:F.w,h:F.h,svg:o.join("")};
 }
 /* 전개도 — 이어 붙인 함은 칸마다 따로 전개한다 (칸 = 독립된 함)
@@ -1545,6 +1647,37 @@ function stage3D(c){
     +`<div class="hint3d">끌어서 돌리기 · 두 손가락/휠로 확대 · `
     +`${open3d?"카바 열림 — 안쪽 면에 내부 부착 부속":"‘카바 열기’로 내부 확인"} · ${R(W)}×${R(H)}×${R(D)}</div></div>`;
 }
+/* ── 홈 · 진입 · 초기화 ── */
+function showHome(){
+  document.body.classList.remove("in-app");
+  $("#rack").hidden=true; $("#home").hidden=false;
+  const r=$("#goResume");
+  if(hasWork(LAST)){
+    const c=LAST.cabs[0], np=LAST.cabs.reduce((a,x)=>a+(x.parts||[]).length,0);
+    $("#homeResumeTxt").textContent=`${LAST.site||c.name||"작업"} · 함 ${LAST.cabs.length}개 · 부속 ${np}개`;
+    r.hidden=false;
+  }else r.hidden=true;
+  window.scrollTo(0,0);
+}
+function freshUI(){
+  sheetMode="dw"; SEL.clear(); editing=null; HILITE=null; DIMSEL=null; faceFilter=""; partQ=""; open3d=false;
+  $("#ped").hidden=true; $("#dimBar").hidden=true;
+}
+function enterApp(resume){
+  S=resume&&LAST?migrate(JSON.parse(JSON.stringify(LAST))):migrate(blankState());
+  hist=[]; $("#btnUndo").disabled=true; freshUI();
+  document.body.classList.add("in-app"); $("#home").hidden=true; $("#rack").hidden=true;
+  window.scrollTo(0,0);
+  render(); zoomFit();
+  if(resume)toast("직전 작업을 불러왔습니다");
+}
+function resetWork(){
+  if(!confirm("지금 작업을 지우고 처음 상태로 돌아갈까요?\n(되돌리기로 복구할 수 있습니다)"))return;
+  pushHist();
+  if(hasWork(S)){LAST=JSON.parse(JSON.stringify(S));try{localStorage.setItem(LS+".last",JSON.stringify(S));}catch(e){}}
+  S=migrate(blankState()); freshUI(); save(); render(); zoomFit();
+  toast("초기화했습니다 — 되돌리기로 복구할 수 있습니다");
+}
 function setDoor(open){
   open3d=open;
   document.querySelectorAll("#box3d .door").forEach(el=>{
@@ -1561,14 +1694,15 @@ function setDoor(open){
   }
   const h=document.querySelector("#stage3d .hint3d");
   if(h)h.textContent=`끌어서 돌리기 · 두 손가락/휠로 확대 · ${open3d?"카바 열림 — 안쪽 면에 내부 부착 부속":"‘카바 열기’로 내부 확인"}`;
-  $("#btnDoor").textContent=open3d?"카바 닫기":"카바 열기";
+  $("#btnDoor").textContent=open3d?"🚪 카바 닫기":"🚪 카바 열기";
+  $("#btnDoor").classList.toggle("open",open3d);
 }
 function drawSheet(){
   const c=cab();
   calcRevDiff();
   if(sheetMode==="3d"){                       /* 3D 는 확대·이동 대신 회전 */
     const el=$("#sheetInner");
-    $("#btnDoor").hidden=!!(c.scope&&c.scope!=="all"); $("#btnDoor").textContent=open3d?"카바 닫기":"카바 열기";
+    $("#btnDoor").hidden=!!(c.scope&&c.scope!=="all"); $("#btnDoor").textContent=open3d?"🚪 카바 닫기":"🚪 카바 열기"; $("#btnDoor").classList.toggle("open",open3d);
     el.style.transform=""; el.style.height="100%";
     $("#sheet").style.aspectRatio="auto";
     $("#sheet").style.height=Math.max(260,Math.round(($("#sheet").clientWidth||360)*.72))+"px";
@@ -1627,7 +1761,6 @@ function render(){
   const set=(id,v)=>{const el=$(id);if(document.activeElement!==el)el.value=v;};
   set("#cname",c.name);set("#cD",c.D);set("#cQ",c.qty);set("#cM",c.mat);set("#cC",c.color||"");
   set("#cT",num(c.trim,0));
-  $("#cBC").checked=!!c.bcov;
   $("#isoL").setAttribute("aria-pressed",(c.iso||"left")==="left");
   $("#isoR").setAttribute("aria-pressed",(c.iso||"left")==="right");
   document.querySelectorAll("[data-mk]").forEach(b=>b.setAttribute("aria-pressed",(c.scope||"all")===b.dataset.mk));
@@ -1980,7 +2113,11 @@ function save(){
 async function boot(){
   let local=null;
   try{local=JSON.parse(localStorage.getItem(LS)||"null");}catch(e){}
-  if(local&&local.cabs&&local.cabs.length){S=migrate(local);render();setStat("이 기기에 저장됨");}
+  /* 제작기는 항상 초기화 상태로 시작 — 직전 작업은 지우지 않고 따로 보관 */
+  let prev=null; try{prev=JSON.parse(localStorage.getItem(LS+".last")||"null");}catch(e){}
+  if(hasWork(local)){LAST=migrate(local);try{localStorage.setItem(LS+".last",JSON.stringify(local));}catch(e){}}
+  else if(hasWork(prev))LAST=migrate(prev);
+  showHome();
   if(typeof claude==="undefined"||!claude.use)return;
   try{DB=await claude.use("db");}catch(e){DB=null;}
   try{DL=await claude.use("downloads");}catch(e){DL=null;}
@@ -1990,7 +2127,7 @@ async function boot(){
       const localAt=num(localStorage.getItem(LS+".at"),0);
       if(d.exists&&d.data().body){
         const remote=JSON.parse(d.data().body);
-        if(remote&&remote.cabs&&remote.cabs.length&&num(d.data().at,0)>localAt){S=migrate(remote);render();}
+        if(hasWork(remote)&&num(d.data().at,0)>localAt){LAST=migrate(remote);if(!document.body.classList.contains("in-app"))showHome();}
       }
       setStat("클라우드 연결됨");
     }catch(e){}
@@ -2362,6 +2499,17 @@ document.addEventListener("click",async ev=>{
   if(t.id==="zOut"){zoomCenter(zoomNow()/1.4);return;}
   if(t.id==="zFit"){if(sheetMode==="3d"){zoom3=1;rot={x:-16,y:-26};drawSheet();}else zoomFit();return;}
   if(t.id==="btnDoor"){setDoor(!open3d);return;}
+  if(t.id==="btnReset"){resetWork();return;}
+  if(t.id==="goDraw"){enterApp(false);return;}
+  if(t.id==="goResume"){enterApp(true);return;}
+  if(t.id==="goRack"){$("#home").hidden=true;$("#rack").hidden=false;window.scrollTo(0,0);return;}
+  if(t.id==="rackBack"){showHome();return;}
+  if(t.id==="homeBtn"){
+    if(hasWork(S)){LAST=JSON.parse(JSON.stringify(S));try{localStorage.setItem(LS+".last",JSON.stringify(S));}catch(e){}}
+    save(); showHome(); return;}
+  if(t.id==="cdHelp"){
+    toast("절곡 깊이 = 카바 가장자리를 뒤로 꺾어 접은 깊이(mm). 카바만 그릴 때 측면 두께와 전개도 날개 폭이 됩니다.");
+    return;}
   if(t.id==="btnFs"){
     document.body.classList.toggle("fs");
     const on=document.body.classList.contains("fs");
