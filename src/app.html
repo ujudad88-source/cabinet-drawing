@@ -48,7 +48,9 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15p
 
 /* ── 도면 시트 ── */
 .sheetbox{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:8px;box-shadow:0 1px 2px rgba(20,32,43,.06)}
-.zoombar{display:flex;align-items:center;gap:4px;padding:0 2px 7px}
+.zoombar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 4px;padding:0 2px 7px;min-width:0}
+.colA,.sheetbox{min-width:0;max-width:100%}
+@media(max-width:480px){.zoombar .lbl{display:none}}
 .zoombar .btn{padding:3px 10px;font-size:15px;line-height:1.1;border:1px solid var(--line);color:var(--ink-2)}
 .zoombar #zVal{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);min-width:44px}
 .sheet{background:#fff;border:1px solid var(--line-2);border-radius:3px;overflow:hidden;
@@ -238,6 +240,11 @@ body.in-app #home,body.in-app #rack{display:none!important}
 .cdw input{width:58px;font:inherit;font-family:var(--mono);font-size:14px;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--panel-2);color:var(--ink);text-align:right}
 .cdw em{font-style:normal}
 .cdw .btn{padding:2px 8px;border:1px solid var(--line);border-radius:999px}
+.top .topb{flex:none;font-size:13.5px;font-weight:700;padding:8px 14px;border-radius:999px;
+  border:1.5px solid var(--ink);background:var(--panel);color:var(--ink);line-height:1.1}
+.top .topb.dark{background:var(--ink);color:var(--panel)}
+.top .topb:hover,.top .topb:focus-visible{border-color:var(--accent);outline:none}
+.top .topb.dark:hover,.top .topb.dark:focus-visible{background:var(--accent);border-color:var(--accent);color:#fff}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
@@ -314,8 +321,8 @@ body.in-app #home,body.in-app #rack{display:none!important}
       <h1>함 제작도면 작성기</h1>
       <div class="sub">Sheet metal enclosure · A4 / mm</div>
     </div>
-    <button class="btn gho" id="homeBtn" aria-label="홈">⌂ 홈</button>
-    <button class="btn gho" id="menuBtn" aria-label="메뉴">⋯ 메뉴</button>
+    <button class="btn topb" id="homeBtn" aria-label="홈으로">⌂ 홈</button>
+    <button class="btn topb dark" id="menuBtn" aria-label="메뉴 열기">☰ 메뉴</button>
     <button id="revBtn" hidden></button><button id="libBtn" hidden></button>
   </div>
 
@@ -332,8 +339,8 @@ body.in-app #home,body.in-app #rack{display:none!important}
       <span style="flex:1"></span>
       <button class="btn" id="btnDoor" hidden>🚪 카바 열기</button>
       <button class="btn gho" id="btnFs" title="도면 전체화면">⛶</button>
-      <button class="btn gho" id="btnUndo" disabled>↩ 되돌리기</button>
-      <button class="btn gho" id="btnReset" title="처음 상태로">⟲ 초기화</button>
+      <button class="btn gho" id="btnUndo" disabled title="되돌리기" aria-label="되돌리기">↩<span class="lbl"> 되돌리기</span></button>
+      <button class="btn gho" id="btnReset" title="처음 상태로" aria-label="초기화">⟲<span class="lbl"> 초기화</span></button>
     </div>
     <div class="sheet" id="sheet"><div id="sheetInner"></div></div>
     <div class="dimbar" id="dimBar" hidden></div>
@@ -2495,8 +2502,8 @@ document.addEventListener("click",async ev=>{
   if(t.dataset.memobig){
     pushHist();const m=(cab().memos||[]).find(x=>x.id===t.dataset.memobig);
     if(m){m.big=m.big?0:1;save();render();}return;}
-  if(t.id==="zIn"){zoomCenter(zoomNow()*1.4);return;}
-  if(t.id==="zOut"){zoomCenter(zoomNow()/1.4);return;}
+  if(t.id==="zIn"){if(sheetMode==="3d"){zoom3=Math.min(4,zoom3*1.2);drawSheet();return;}zoomCenter(zoomNow()*1.4);return;}
+  if(t.id==="zOut"){if(sheetMode==="3d"){zoom3=Math.max(.35,zoom3/1.2);drawSheet();return;}zoomCenter(zoomNow()/1.4);return;}
   if(t.id==="zFit"){if(sheetMode==="3d"){zoom3=1;rot={x:-16,y:-26};drawSheet();}else zoomFit();return;}
   if(t.id==="btnDoor"){setDoor(!open3d);return;}
   if(t.id==="btnReset"){resetWork();return;}
