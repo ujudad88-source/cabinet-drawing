@@ -50,7 +50,18 @@ body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15p
 .sheetbox{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:8px;box-shadow:0 1px 2px rgba(20,32,43,.06)}
 .zoombar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 4px;padding:0 2px 7px;min-width:0}
 .colA,.sheetbox{min-width:0;max-width:100%}
-@media(max-width:480px){.zoombar .lbl{display:none}}
+.zoombar .btn.ib{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;font-size:12.5px;
+  border:1px solid var(--line);border-radius:8px;color:var(--ink-2);background:var(--panel)}
+.zoombar .btn.ib:disabled{opacity:.4}
+.zoombar .btn.ib:hover:not(:disabled),.zoombar .btn.ib:focus-visible{border-color:var(--accent);color:var(--accent)}
+.zoombar .btn.ib svg{display:block;flex:none}
+@media(max-width:480px){                         /* 좁은 화면 — 한 줄에 다 들어가게 */
+  .zoombar .lbl{display:none}
+  .zoombar{gap:6px 5px}
+  .zoombar .btn.ib{padding:5px 7px}
+  .zoombar #zVal{min-width:38px}
+  .zoombar .btn{padding:3px 8px}
+}
 .zoombar .btn{padding:3px 10px;font-size:15px;line-height:1.1;border:1px solid var(--line);color:var(--ink-2)}
 .zoombar #zVal{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);min-width:44px}
 .sheet{background:#fff;border:1px solid var(--line-2);border-radius:3px;overflow:hidden;
@@ -319,7 +330,6 @@ body.in-app #home,body.in-app #rack{display:none!important}
     <div class="mark" aria-hidden="true"></div>
     <div style="flex:1;min-width:0">
       <h1>광전기통신 도면 생성</h1>
-      <div class="sub">Sheet metal enclosure · A4 / mm</div>
     </div>
     <button class="btn topb" id="homeBtn" aria-label="홈으로">⌂ 홈</button>
     <button class="btn topb dark" id="menuBtn" aria-label="메뉴 열기">☰ 메뉴</button>
@@ -338,16 +348,17 @@ body.in-app #home,body.in-app #rack{display:none!important}
       <span id="zVal">100%</span>
       <span style="flex:1"></span>
       <button class="btn" id="btnDoor" hidden>🚪 카바 열기</button>
-      <button class="btn gho" id="btnFs" title="도면 전체화면">⛶</button>
-      <button class="btn gho" id="btnUndo" disabled title="되돌리기" aria-label="되돌리기">↩<span class="lbl"> 되돌리기</span></button>
-      <button class="btn gho" id="btnReset" title="처음 상태로" aria-label="초기화">⟲<span class="lbl"> 초기화</span></button>
+      <button class="btn gho ib" id="btnZoom" title="크게 보기" aria-label="크게 보기"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.6-4.6"/><path d="M10.5 7.5v6M7.5 10.5h6"/></svg><span class="lbl">크게</span></button>
+      <button class="btn gho ib" id="btnFs" title="도면 전체화면" aria-label="전체화면"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button class="btn gho ib" id="btnUndo" disabled title="되돌리기" aria-label="되돌리기"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a5 5 0 0 1 0 10h-3"/></svg><span class="lbl">되돌리기</span></button>
+      <button class="btn gho ib" id="btnReset" title="처음 상태로 초기화" aria-label="초기화"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9.5 12.5 14 17M14 12.5 9.5 17"/></svg><span class="lbl">초기화</span></button>
     </div>
     <div class="sheet" id="sheet"><div id="sheetInner"></div></div>
     <div class="dimbar" id="dimBar" hidden></div>
     <div class="chips" id="viewChips" style="margin-top:9px"></div>
     <div class="sheethint">
       <span id="hint">부속을 <b>끌어서</b> 위치를 옮길 수 있습니다</span>
-      <span style="display:flex;gap:8px;align-items:center;white-space:nowrap"><span id="scaleInfo" style="font-family:var(--mono)"></span><button class="btn gho" id="btnZoom" style="padding:3px 7px">크게 보기</button></span>
+      <span id="scaleInfo" style="font-family:var(--mono);white-space:nowrap"></span>
     </div>
   </div>
 
@@ -1509,7 +1520,7 @@ function curSVG(px){
    브라우저가 매번 벡터로 다시 그리므로 아무리 확대해도
    글자와 선이 화면 해상도 그대로 선명하다.                          */
 let VB={x:0,y:0,w:SHEET.w,h:SHEET.h};
-const ZMIN=.2,ZMAX=24;
+const ZMIN=1,ZMAX=24;      /* 100% 보다 작게는 줄이지 않는다 */
 function zoomNow(){return SHEET.w/VB.w;}
 /* 실제로 도면이 그려진 사각형 (여백 제외) */
 function contentRect(){
@@ -1522,9 +1533,11 @@ function contentRect(){
   return{left:r.left+(r.width-w)/2,top:r.top+(r.height-h)/2,width:w,height:h};
 }
 function applyZoom(){
-  /* 어디든 자유롭게 — 도면이 화면에서 완전히 사라지지만 않게 */
-  VB.x=Math.max(-VB.w*.9,Math.min(SHEET.w-VB.w*.1,VB.x));
-  VB.y=Math.max(-VB.h*.9,Math.min(SHEET.h-VB.h*.1,VB.y));
+  if(SHEET.w/VB.w<=1.001){VB.x=0;VB.y=0;}            /* 100% 면 시트 전체가 딱 맞음 */
+  else{                                              /* 확대 중에는 자유롭게 이동 */
+    VB.x=Math.max(-VB.w*.35,Math.min(SHEET.w-VB.w*.65,VB.x));
+    VB.y=Math.max(-VB.h*.35,Math.min(SHEET.h-VB.h*.65,VB.y));
+  }
   const svg=$("#sheet svg");
   if(svg)svg.setAttribute("viewBox",
     `${VB.x.toFixed(3)} ${VB.y.toFixed(3)} ${VB.w.toFixed(3)} ${VB.h.toFixed(3)}`);
@@ -1792,6 +1805,7 @@ function render(){
     +`<button data-al="l">좌</button><button data-al="cx">가운데</button><button data-al="r">우</button>`
     +`<button data-al="t">상</button><button data-al="cy">중앙</button><button data-al="b">하</button>`
     +`<button data-al="ex">가로 균등</button><button data-al="ey">세로 균등</button>`
+    +`<button data-al="dimon">치수 표시</button><button data-al="dimoff">치수 숨김</button>`
     +`<button id="grpMake">그룹 묶기</button><button id="grpBreak">그룹 해제</button>`
     +`<button data-al="selall">보이는 것 전체 선택</button>`
     +`<button data-al="del" style="color:var(--danger);border-color:var(--danger)">선택 삭제</button>`
@@ -1900,10 +1914,11 @@ function sheetPt(ev){
 }
 /* ── 손가락/마우스: 부속 이동 · 지시선 이동 · 화면 이동 · 두 손가락 확대 ── */
 const PTS=new Map();
-let pinch=null,pan=null,lastTap=0,holdT=0;
+let pinch=null,pan=null,lastTap=0,lastTapXY=null,holdT=0;
 const pdist=()=>{const a=[...PTS.values()];return Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);};
 const pmid=()=>{const a=[...PTS.values()];return{x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2};};
 $("#sheet").addEventListener("pointerdown",ev=>{
+  if(ev.isPrimary){PTS.clear();pinch=null;pan=null;}   /* 새 제스처 — 남아 있던 포인터 비우기 */
   PTS.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
   if(sheetMode==="3d"){
     if(PTS.size===2){pinch={d:pdist()||1,z:zoom3,is3d:1};ev.preventDefault();return;}
@@ -1917,8 +1932,11 @@ $("#sheet").addEventListener("pointerdown",ev=>{
     ev.preventDefault();return;
   }
   const now=Date.now();                               /* 두 번 두드리기 → 그 지점 확대 */
-  if(now-lastTap<320){lastTap=0;zoomAt(zoomNow()>=3.5?1:zoomNow()*2,ev.clientX,ev.clientY);ev.preventDefault();return;}
-  lastTap=now;
+  /* 같은 자리를 연달아 두드렸을 때만 — 다른 곳을 눌렀다면 그냥 새 동작이다 */
+  const near=lastTapXY&&Math.hypot(ev.clientX-lastTapXY.x,ev.clientY-lastTapXY.y)<28;
+  if(now-lastTap<320&&near){lastTap=0;lastTapXY=null;
+    zoomAt(zoomNow()>=3.5?1:zoomNow()*2,ev.clientX,ev.clientY);ev.preventDefault();return;}
+  lastTap=now;lastTapXY={x:ev.clientX,y:ev.clientY};
   const el=ev.target.closest?ev.target:null;
   const dimg=el&&el.closest("[data-dimfor]");
   if(dimg&&sheetMode==="dw"){                          /* 치수를 누르면 어느 부속인지 표시 */
@@ -1941,6 +1959,7 @@ $("#sheet").addEventListener("pointerdown",ev=>{
   const pt=sheetPt(ev);
   if(sheetMode!=="dw"||!g||!cell||!pt){               /* 빈 곳 → 화면 이동 */
     const sh=$("#sheet");
+    if(zoomNow()<=1.001){ev.preventDefault();return;}  /* 100% — 이동할 여백이 없다 */
     pan={x:ev.clientX,y:ev.clientY,vx:VB.x,vy:VB.y};
     sh.classList.add("panning");
     try{sh.setPointerCapture(ev.pointerId);}catch(e){}
@@ -2050,7 +2069,8 @@ $("#sheet").addEventListener("pointermove",ev=>{
   if(!drag.raf)drag.raf=requestAnimationFrame(()=>{drag&&(drag.raf=0);drawSheet();});
   ev.preventDefault();
 });
-["pointerup","pointercancel","pointerleave"].forEach(e=>$("#sheet").addEventListener(e,ev=>{
+/* 손을 뗐을 때는 화면 밖이어도 반드시 정리되도록 창 전체에서 받는다 */
+["pointerup","pointercancel"].forEach(e=>window.addEventListener(e,ev=>{
   PTS.delete(ev.pointerId);
   clearTimeout(holdT);
   if(PTS.size<2)pinch=null;
@@ -2549,6 +2569,12 @@ document.addEventListener("click",async ev=>{
   if(t.dataset.al){                                   /* 선택한 부속 정렬·균등 배치 */
     const a=t.dataset.al;
     if(a==="clear"){SEL.clear();render();return;}
+    if(a==="dimon"||a==="dimoff"){                   /* 고른 부속만 치수 표시·숨김 */
+      const on=a==="dimon",c=cab(),n=(c.parts||[]).filter(p=>SEL.has(p.id));
+      if(!n.length)return;
+      pushHist();
+      n.forEach(p=>{p.dim=on?1:0;p.dx=1;p.dy=1;});
+      save();render();toast(`${n.length}개 치수를 ${on?"표시했":"숨겼"}습니다`);return;}
     if(a==="selall"){
       const q=(partQ||"").trim().toLowerCase();
       (cab().parts||[]).forEach(p=>{
