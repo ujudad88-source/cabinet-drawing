@@ -222,6 +222,7 @@ body.fs .sheethint,body.fs .dimbar,body.fs #viewChips{flex:none}
 .f3.door{transition:transform .6s cubic-bezier(.2,.7,.2,1)}
 .f3 svg{display:block;width:100%;height:100%}
 .f3.dim{background:#eef2f6}
+.f3.sep{background:#dfe7ee;border-color:#40506080}   /* 내부 격벽·칸막이 */
 .hint3d{position:absolute;left:10px;bottom:8px;font-size:11.5px;color:var(--ink-3);
   background:rgba(255,255,255,.8);padding:4px 8px;border-radius:6px}
 /* 함 구성 도식 */
@@ -735,7 +736,7 @@ function colBands(c){
 }
 function colLabel(c){return COLS(c).map(q=>R(num(q.w,0))).join("+");}
 function newCab(n){const c={id:uid(),name:n||"단자함",W:600,H:950,D:150,qty:1,
-  trim:20,iso:"left",bcov:1,hinge:"left",scope:"all",cd:25,mat:"STEEL 1.6T",color:"5Y7-1 분체도장",
+  trim:0,iso:"right",bcov:1,hinge:"right",scope:"all",cd:25,mat:"STEEL 1.6T",color:"5Y7-1 분체도장",
   secs:[{n:"본체",h:800},{n:"풀박스",h:150}],cols:[{n:"",w:600}],parts:[]};
   syncH(c);syncW(c);return c;}
 function seed(){
@@ -985,11 +986,23 @@ function scopeTag(c){const s=c._scope||c.scope;return s==="body"?" (내함)":s==
 /* ── 칸(cell) ──────────────────────────────────────────────
    함을 가로(열)·세로(단)로 이어 붙이면 각 칸이 사실상 독립된 함이다.
    부속은 "어느 칸"에 속하고, X·Y 는 그 칸의 모서리에서 잰다.         */
+/* 하판 계열 수평판 : 맨 아래 하판 + 단과 단 사이 격벽.
+   모두 W×D 크기라 면 좌표(0,0~W,D)는 같고, 어느 판인지만 rw 로 구분한다. */
+function botPanels(c){
+  const bands=secBands(c);
+  const a=[{n:"하판",h:c.D,y0:0,y1:c.D,sep:0}];
+  for(let i=bands.length-1;i>=1;i--){
+    const lo=bands[i].n||(i+1)+"단", up=bands[i-1].n||i+"단";
+    a.push({n:`격벽 ${up}·${lo}`,h:c.D,y0:0,y1:c.D,sep:1,yy:bands[i].y0});
+  }
+  return a;
+}
 function cellsOf(c,face){
   const rows=secBands(c), cols=colBands(c);
   if(face==="front"||face==="back")return{cols,rows};
   if(face==="left"||face==="right")return{cols:[{n:"",w:c.D,x0:0,x1:c.D}],rows};
-  return{cols,rows:[{n:"",h:c.D,y0:0,y1:c.D}]};              /* 상판·하판 */
+  if(face==="bottom")return{cols,rows:botPanels(c)};         /* 하판 = 하판 + 격벽 */
+  return{cols,rows:[{n:"",h:c.D,y0:0,y1:c.D}]};              /* 상판 */
 }
 function cellRect(c,face,p){
   const g=cellsOf(c,face);
@@ -1006,6 +1019,8 @@ function posIn(cell,p){
 }
 function cellName(c,face,p){
   const r=cellRect(c,face,p);
+  if(face==="bottom"&&r.nr>1)                                /* 하판·격벽은 판 이름이 먼저 */
+    return (r.nc>1?(r.cn||(r.ci+1)+"열")+"·":"")+(r.rn||"하판");
   if(r.nc<2&&r.nr<2)return "";
   const a=[];
   if(r.nc>1)a.push(r.cn||(r.ci+1)+"열");
@@ -1054,6 +1069,7 @@ function drawParts(c,faces,ox,oy,pw,ph,k,view,opt){
   faces.forEach(face=>{
     (c.parts||[]).filter(p=>p.f===face&&(!opt.onlySide||(p.s||"out")===opt.onlySide)).forEach(p=>{
       let cell=cellRect(c,face,p);
+      if(opt.rowOnly!=null&&cell.ri!==opt.rowOnly)return;   /* 하판·격벽 중 한 판만 */
       if(opt.cellOnly){                        /* 전개도: 그 칸의 부속만, 칸 모서리 기준으로 */
         if(cell.ci!==opt.cellOnly.ci||cell.ri!==opt.cellOnly.ri)return;
         cell=Object.assign({},cell,{x0:0,y0:0});
@@ -1174,7 +1190,7 @@ function panelView(face,opt){
       }));
       o.push(tx(x+pd.w/2,y+pd.h/2,"개구부 — 카바 별도 제작",2.8*k,"middle"));
     }
-    if(face==="front"&&c._scope!=="body"&&(c.hinge||"left")==="double"){  /* 양개 : 가운데 맞닿는 선 */
+    if(face==="front"&&c._scope!=="body"&&(c.hinge||"right")==="double"){  /* 양개 : 가운데 맞닿는 선 */
       bands.forEach(b=>cbs.forEach(q=>
         o.push(ln(x+q.x0+q.w/2,y+b.y0,x+q.x0+q.w/2,y+b.y1,.45*k))));
     }
@@ -1207,7 +1223,7 @@ function vIso(c,cw,ch,long){
   const F=fitBox(cw,ch,ob+W,ob+H,{l:TT+4.5,r:Math.max(LAB(long)*.8,14),
     t:(cbs.length>1?TT:TD)+4.5,b:22});
   const k=F.k,o=[],hid=`${2.4*k},${1.5*k}`;
-  const L=(c.iso||"left")==="left";         /* true = 좌측면이 드러남(깊이가 좌측 위로) */
+  const L=(c.iso||"right")==="left";         /* true = 좌측면이 드러남(깊이가 좌측 위로) */
   const sg=L?-1:1, TR=Math.max(0,num(c.trim,0));
   const fx=F.x+(L?ob:0), fy=F.y+ob;         // 전면(도어) 좌상단
   const bx=fx+sg*ob, by=fy-ob;              // 배면 좌상단
@@ -1227,7 +1243,7 @@ function vIso(c,cw,ch,long){
     o.push(`<g transform="matrix(${sf0},${nt0},0,1,${hx.toFixed(2)},${fy.toFixed(2)})">`
       +drawParts(c,[L?"right":"left"],0,0,D,H,k,"iso",{noDim:1,noLabel:1,hidden:1})+`</g>`);
     o.push(`<g transform="matrix(1,0,${sf0},${nt0},${fx.toFixed(2)},${(fy+TH).toFixed(2)})">`
-      +drawParts(c,["bottom"],0,0,W,D,k,"iso",{noDim:1,noLabel:1,hidden:1})+`</g>`);
+      +drawParts(c,["bottom"],0,0,W,D,k,"iso",{noDim:1,noLabel:1,hidden:1,rowOnly:0})+`</g>`);
   }
   /* ── 보이는 면 (실선) ── */
   o.push(pg([[fx,fy],[fx+W,fy],[bx+W,by],[bx,by]],.6*k));            // 상면
@@ -1239,7 +1255,7 @@ function vIso(c,cw,ch,long){
       if(b.h>2*fl&&q.w>2*fl)o.push(rc(fx+q.x0+fl,fy+b.y0+fl,q.w-2*fl,b.h-2*fl,.45*k));
     }));
   }
-  if(c._scope!=="body"&&(c.hinge||"left")==="double")cbs.forEach(q=>
+  if(c._scope!=="body"&&(c.hinge||"right")==="double")cbs.forEach(q=>
     o.push(ln(fx+q.x0+q.w/2,fy,fx+q.x0+q.w/2,fy+TH,.45*k)));        // 양개 가운데 맞닿는 선                                       // 전면 전체 외곽
   /* ── 열(가로) 경계 — 전면·상면은 실선, 배면은 점선 ── */
   cbs.forEach((q,i)=>{
@@ -1342,12 +1358,19 @@ function vUnfold(c,cw,ch,long){
 /* 상·하면도 — 상판과 하판을 위아래로 나란히 */
 function vTopBottom(c,cw,ch,long){
   const GAP=9;
-  const F=fitBox(cw,ch,c.W,c.D*2,{l:TD+4.5,r:Math.max(LAB(long)*.8,T3+5),t:TD+4.5,b:T3+10+GAP});
+  /* 상면 + 하판 + (단이 여러 개면) 격벽까지 위에서 아래로 나란히 */
+  const pans=botPanels(c);
+  const rowsN=1+pans.length;
+  const F=fitBox(cw,ch,c.W,c.D*rowsN+GAP*(rowsN-1),
+    {l:TD+4.5,r:Math.max(LAB(long)*.8,T3+5),t:TD+4.5,b:T3+10+GAP});
   const k=F.k,x=F.x,y=F.y,o=[],gp=GAP*k,cbs=colBands(c);
-  [["top",y,"상 면"],["bottom",y+c.D+gp,"하 면"]].forEach(([face,yy,nm])=>{
+  const list=[["top",0,"상 면",null]];
+  pans.forEach((pn,j)=>list.push(["bottom",j+1,j?pn.n:"하 면",j]));
+  list.forEach(([face,ri,nm,rowOnly])=>{
+    const yy=y+ri*(c.D+gp);
     o.push(rc(x,yy,c.W,c.D,.6*k));
     cbs.forEach((q,i)=>{if(i)o.push(ln(x+q.x0,yy,x+q.x0,yy+c.D,.5*k));});
-    o.push(drawParts(c,[face],x,yy,c.W,c.D,k,"topbottom",{long}));
+    o.push(drawParts(c,[face],x,yy,c.W,c.D,k,"topbottom",{long,rowOnly}));
     o.push(tx(x-2.5*k,yy+c.D/2,nm,2.6*k,"middle",-90));
   });
   cbs.forEach(q=>o.push(dimH(x+q.x0,x+q.x1,y-TD*k,y,k)));
@@ -1624,9 +1647,9 @@ function calcRevDiff(){
    무거운 3D 라이브러리 없이 CSS 3D 로 여섯 면을 세운다.
    각 면에는 실제 도면의 그 면을 그대로 붙인다.                */
 let rot={x:-16,y:-26}, zoom3=1, open3d=false;
-const DOOR_OPEN=-108;                                 /* 좌측 경첩, 앞쪽으로 열림 */
+const DOOR_OPEN=-108;                                 /* 경첩 쪽을 축으로 앞으로 열림 */
 /* mode : "out" 바깥면(외부 부착) · "in" 안쪽면(내부 부착, 좌우 반전해 제자리) */
-function face3D(c,face,mode,vb){
+function face3D(c,face,mode,vb,rowOnly){
   const pd=faceDims(c,face);
   const k=Math.max(pd.w,pd.h)/260;
   const o=[], flip=mode==="in", fxx=x=>flip?pd.w-x:x;
@@ -1639,9 +1662,14 @@ function face3D(c,face,mode,vb){
     if(b.h>2*TR&&q.w>2*TR)o.push(rc(q.x0+TR,b.y0+TR,q.w-2*TR,b.h-2*TR,.45*k));
   }));
   o.push(drawParts(c,[face],0,0,pd.w,pd.h,k,"v3d",
-    {noDim:1,noLabel:1,solid:1,flipX:flip,onlySide:mode==="all"?null:mode}));
+    {noDim:1,noLabel:1,solid:1,flipX:flip,onlySide:mode==="all"?null:mode,rowOnly}));
   const v=vb?vb.map(n=>(+n).toFixed(2)).join(" "):`0 0 ${pd.w} ${pd.h}`;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${v}" preserveAspectRatio="none">${o.join("")}</svg>`;
+}
+/* 부속이 붙지 않는 내부 판(칸막이) — 이름만 적은 빈 판 */
+function blank3D(nm){
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none">`
+    +`<text x="50" y="52" font-size="9" text-anchor="middle" fill="#8b98a6" font-family="sans-serif">${nm}</text></svg>`;
 }
 function stage3D(c){
   const host=$("#sheet");
@@ -1658,9 +1686,28 @@ function stage3D(c){
    ["left",d,h,`rotateY(-90deg) translateZ(${hw}px)`],
    ["top",w,d,`rotateX(90deg) translateZ(${hh}px)`],
    ["bottom",w,d,`rotateX(-90deg) translateZ(${hh}px)`]].forEach(([f,ww,h2,tr])=>{
-    out.push(F(face3D(c,f,"out"),f==="bottom"?"dim":"",ww,h2,tr));
-    out.push(F(face3D(c,f,"in"),"in",ww,h2,tr+" rotateY(180deg)"));
+    const ro=f==="bottom"?0:null;
+    out.push(F(face3D(c,f,"out",null,ro),f==="bottom"?"dim":"",ww,h2,tr));
+    out.push(F(face3D(c,f,"in",null,ro),"in",ww,h2,tr+" rotateY(180deg)"));
   });
+  if(c._scope!=="cover"){
+    /* 단 사이 격벽 — 함이 위아래로 이어질 때 내부를 나누는 판 */
+    botPanels(c).forEach((pn,j)=>{
+      if(!pn.sep)return;
+      const dy=(pn.yy*s-h/2).toFixed(1);
+      const tr=`translateY(${dy}px) rotateX(90deg)`;
+      out.push(F(face3D(c,"bottom","out",null,j),"sep",w,d,tr));
+      out.push(F(face3D(c,"bottom","in",null,j),"sep in",w,d,tr+" rotateX(180deg)"));
+    });
+    /* 열 사이 칸막이 — 함을 좌우로 이어 붙였을 때 */
+    colBands(c).forEach((q,i)=>{
+      if(!i)return;
+      const dx=(q.x0*s-w/2).toFixed(1);
+      const tr=`translateX(${dx}px) rotateY(90deg)`;
+      out.push(F(blank3D("칸막이"),"sep",d,h,tr));
+      out.push(F(blank3D("칸막이"),"sep in",d,h,tr+" rotateY(180deg)"));
+    });
+  }
   if(c._scope==="cover"){                             /* 카바 단품 : 전면판이 곧 제품 */
     out.push(F(face3D(c,"front","out"),"",w,h,`translateZ(${hd}px)`));
     out.push(F(face3D(c,"front","in"),"in",w,h,`translateZ(${hd}px) rotateY(180deg)`));
@@ -1690,7 +1737,7 @@ function stage3D(c){
     +`<div class="box3d" id="box3d" style="width:${w.toFixed(1)}px;height:${h.toFixed(1)}px;`
     +`transform:rotateX(${rot.x}deg) rotateY(${rot.y}deg)">${out.join("")}</div>`
     +`<div class="hint3d">끌어서 돌리기 · 두 손가락/휠로 확대 · `
-    +`${open3d?"카바 열림 — 안쪽 면에 내부 부착 부속":"‘카바 열기’로 내부 확인"} · ${R(W)}×${R(H)}×${R(D)}</div></div>`;
+    +`${open3d?"카바 열림 — 안쪽 면에 내부 부착 부속":"‘카바 열기’로 내부 확인"}${SECS(c).length>1||COLS(c).length>1?" · 내부 격벽 표시":""} · ${R(W)}×${R(H)}×${R(D)}</div></div>`;
 }
 /* ── 홈 · 진입 · 초기화 ── */
 function showHome(){
@@ -1806,10 +1853,10 @@ function render(){
   const set=(id,v)=>{const el=$(id);if(document.activeElement!==el)el.value=v;};
   set("#cname",c.name);set("#cD",c.D);set("#cQ",c.qty);set("#cM",c.mat);set("#cC",c.color||"");
   set("#cT",num(c.trim,0));
-  $("#isoL").setAttribute("aria-pressed",(c.iso||"left")==="left");
-  $("#isoR").setAttribute("aria-pressed",(c.iso||"left")==="right");
+  $("#isoL").setAttribute("aria-pressed",(c.iso||"right")==="left");
+  $("#isoR").setAttribute("aria-pressed",(c.iso||"right")==="right");
   document.querySelectorAll("[data-mk]").forEach(b=>b.setAttribute("aria-pressed",(c.scope||"all")===b.dataset.mk));
-  document.querySelectorAll("[data-hg]").forEach(b=>b.setAttribute("aria-pressed",(c.hinge||"left")===b.dataset.hg));
+  document.querySelectorAll("[data-hg]").forEach(b=>b.setAttribute("aria-pressed",(c.hinge||"right")===b.dataset.hg));
   $("#fCD").hidden=(c.scope||"all")!=="cover"; set("#cCD",num(c.cd,25));
   renderGmap(c);
   set("#psite",S.site);set("#pdraw",S.drawer);set("#pdate",S.date);set("#pno",S.no);
@@ -1897,6 +1944,8 @@ function openPart(id){
   $("#pcl").innerHTML=g.cols.map((q,i)=>`<option value="${i}"${i===cr.ci?" selected":""}>${esc(q.n||(i+1)+"열")}</option>`).join("");
   $("#prw").innerHTML=g.rows.map((b,i)=>`<option value="${i}"${i===cr.ri?" selected":""}>${esc(b.n||(i+1)+"단")}</option>`).join("");
   $("#fcl").hidden=g.cols.length<2; $("#frw").hidden=g.rows.length<2;
+  /* 하판 쪽은 '단'이 아니라 '어느 판(하판·격벽)'을 고르는 것이다 */
+  $("#frw").querySelector("label").textContent=p.f==="bottom"?"소속 판":"소속 단";
   /* 기준면 */
   const side=p.f==="left"||p.f==="right";
   $("#pax").innerHTML=side
@@ -2113,9 +2162,9 @@ function migrate(st){
   if(!st.paper)st.paper="A4";
   st.cabs.forEach(c=>{
     if(c.trim==null)c.trim=0;
-    if(!c.iso)c.iso="left";
+    if(!c.iso)c.iso="right";
     if(c.bcov==null)c.bcov=1;
-    if(!c.hinge)c.hinge="left";
+    if(!c.hinge)c.hinge="right";
     if(!c.scope)c.scope="all";
     if(c.cd==null)c.cd=25;
     if(!c.secs||!c.secs.length){                /* 받침대 → 풀박스 단으로 전환 */
