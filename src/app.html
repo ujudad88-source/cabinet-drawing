@@ -178,8 +178,8 @@ section.fold>*:not(.shd){display:none!important}
 .prow .ck{flex:none;width:19px;height:19px;accent-color:var(--accent);margin:0}
 /* 도면 전체화면 */
 body.fs{overflow:hidden}
-body.fs .top,body.fs .colB,body.fs .bar,body.fs #sheetTabs{display:none!important}
-body.fs .wrap{max-width:none;padding:0}
+body.fs .top,body.fs .colB,body.fs .bar,body.fs #sheetTabs,body.fs #rTabs{display:none!important}
+body.fs .wrap,body.fs .rwrap{max-width:none;padding:0}
 body.fs .cols{display:block}
 body.fs .colA{position:static}
 body.fs .sheetbox{position:fixed;inset:0;z-index:70;margin:0;border:0;border-radius:0;
@@ -313,8 +313,8 @@ body.in-app #home,body.in-app #rack{display:none!important}
           <g fill="currentColor"><circle cx="45" cy="18" r="1.3"/><circle cx="49" cy="18" r="1.3"/><circle cx="53" cy="18" r="1.3"/><circle cx="45" cy="29" r="1.3"/><circle cx="49" cy="29" r="1.3"/></g>
           <g stroke="currentColor" stroke-width=".8"><line x1="36" y1="66" x2="84" y2="66"/><line x1="36" y1="72" x2="84" y2="72"/><line x1="36" y1="78" x2="84" y2="78"/></g></svg>
         <b>캐비닛 랙 실장</b>
-        <span>19인치 랙에 장비를 U 단위로 배치한 실장도</span>
-        <em class="soon">개발 예정</em>
+        <span>19인치 랙에 장비를 U 단위로 얹고 실장도·내역서를 뽑습니다</span>
+        <em>시작하기 →</em>
       </button>
     </div>
     <button class="hresume" id="goResume" type="button" hidden>↺ 직전 작업 이어서 하기 <small id="homeResumeTxt"></small></button>
@@ -2708,7 +2708,7 @@ document.addEventListener("click",async ev=>{
   if(t.id==="btnReset"){resetWork();return;}
   if(t.id==="goDraw"){enterApp(false);return;}
   if(t.id==="goResume"){enterApp(true);return;}
-  if(t.id==="goRack"){$("#home").hidden=true;$("#rack").hidden=false;window.scrollTo(0,0);return;}
+  if(t.id==="goRack"){$("#home").hidden=true;$("#rack").hidden=false;window.scrollTo(0,0);rRender();return;}
   if(t.id==="rackBack"){showHome();return;}
   if(t.id==="homeBtn"){
     if(hasWork(S)){LAST=JSON.parse(JSON.stringify(S));try{localStorage.setItem(LS+".last",JSON.stringify(S));}catch(e){}}
@@ -3101,5 +3101,666 @@ $("#pos9").innerHTML=["좌상","상","우상","좌","중앙","우","좌하","하
 try{document.querySelectorAll("[data-fold]").forEach(h=>{
   if(localStorage.getItem(LS+".fold."+h.dataset.fold)==="1")h.closest("section").classList.add("fold");
 });}catch(e){}
+
+/* ══════════════════════════════════════════════════════════════
+   캐비닛 랙 실장
+   19인치 EIA-310 기준. 1U = 44.45mm. 장비는 U 칸 단위로만 놓인다.
+   손도면 제작과 같은 도면 엔진(ln/rc/tx/dimH/dimV/frame)을 그대로 쓴다.
+   ══════════════════════════════════════════════════════════════ */
+const UMM=44.45;                       /* 1U */
+const RAIL=15.9;                       /* 레일에서 장비 앞면까지 여유 (표기용) */
+const RLS="rackplan.v1";
+const RTYPE={wall:"벽부형",stand:"스탠드형",open:"오픈랙"};
+const RPRESET=[[42,600,900],[42,600,1000],[22,600,600],[22,600,450],[12,600,450],[45,700,1000]];
+/* 기본 장비 12종 — 이름 · U · 소비전력W · 중량kg · 포트수 · 색 */
+const RLIB0=[
+ {t:"odf",  n:"광단자함 ODF", u:3, pw:0,   wt:12, pt:24, c:"#e2600d"},
+ {t:"olt",  n:"OLT",          u:2, pw:320, wt:14, pt:8,  c:"#2b6cb0"},
+ {t:"sw2",  n:"L2 스위치",    u:1, pw:60,  wt:4,  pt:48, c:"#3f7f5f"},
+ {t:"sw3",  n:"L3 스위치",    u:1, pw:120, wt:6,  pt:24, c:"#2f6b53"},
+ {t:"pp24", n:"패치패널 24P", u:1, pw:0,   wt:2,  pt:24, c:"#6b7280"},
+ {t:"pp48", n:"패치패널 48P", u:2, pw:0,   wt:3,  pt:48, c:"#6b7280"},
+ {t:"cm",   n:"케이블 정리대",u:1, pw:0,   wt:1,  pt:0,  c:"#9aa7b3"},
+ {t:"shelf",n:"선반",         u:1, pw:0,   wt:3,  pt:0,  c:"#8a6d3b"},
+ {t:"pdu",  n:"PDU 전원",     u:1, pw:0,   wt:3,  pt:8,  c:"#44545f"},
+ {t:"ups",  n:"UPS",          u:2, pw:0,   wt:25, pt:0,  c:"#7a3b3b"},
+ {t:"srv",  n:"서버",         u:2, pw:450, wt:20, pt:2,  c:"#334155"},
+ {t:"blank",n:"블랭크 패널",  u:1, pw:0,   wt:.5, pt:0,  c:"#c2ccd6"}
+];
+const RCOLORS=["#e2600d","#2b6cb0","#3f7f5f","#6b7280","#8a6d3b","#7a3b3b","#334155","#c2ccd6"];
+const RTABS=[["fr","실장도"],["sp","측면·평면도"],["bom","실장 내역서"]];
+
+function newRack(nm){return{id:uid(),name:nm||"통신랙",u:42,w:600,d:900,type:"stand",qty:1,items:[]};}
+let RS={site:"",drawer:"",no:"",date:today,paper:"A4",racks:[newRack()],cur:0,lib:[]};
+let rView="fr", rHist=[], rSaveT=0, rSel=null, rVB={x:0,y:0,w:SHEET.w,h:SHEET.h};
+function rk(){return RS.racks[Math.min(RS.cur,RS.racks.length-1)]||RS.racks[0];}
+function rLib(){return RLIB0.concat(RS.lib||[]);}
+function rSpec(it){return RLIB0.concat(RS.lib||[]).find(x=>x.t===it.t)||it;}
+function rRackH(r){return num(r.u,42)*UMM;}           /* 레일 높이(mm) */
+
+/* ── 저장 ── */
+function rSave(){
+  clearTimeout(rSaveT);
+  rSaveT=setTimeout(()=>{
+    try{localStorage.setItem(RLS,JSON.stringify(RS));}catch(e){}
+    const el=$("#rSaveState"); if(el)el.textContent="이 기기에 저장됨";
+  },600);
+}
+function rLoad(){
+  let v=null; try{v=JSON.parse(localStorage.getItem(RLS)||"null");}catch(e){}
+  if(v&&v.racks&&v.racks.length){
+    RS=v;
+    RS.racks.forEach(r=>{r.items=r.items||[];if(!r.type)r.type="stand";});
+    RS.lib=RS.lib||[];
+  }
+}
+function rPush(){
+  rHist.push(JSON.stringify(RS));
+  if(rHist.length>40)rHist.shift();
+  const b=$("#rBtnUndo"); if(b)b.disabled=false;
+}
+function rUndo(){
+  if(!rHist.length)return;
+  try{RS=JSON.parse(rHist.pop());}catch(e){return;}
+  rSel=null;
+  const b=$("#rBtnUndo"); if(b)b.disabled=!rHist.length;
+  rSave(); rRender(); toast("되돌렸습니다");
+}
+
+/* ── 자리 계산 · 겹침 검사 (A4) ── */
+function rOcc(r,skip){                        /* 점유 U 배열 */
+  const a=new Array(num(r.u,42)+1).fill(null);
+  (r.items||[]).forEach(it=>{
+    if(it===skip)return;
+    for(let i=0;i<num(it.u,1);i++){const p=num(it.at,1)+i; if(p>=1&&p<=r.u)a[p]=it;}
+  });
+  return a;
+}
+function rFits(r,it,at,skip){
+  const u=num(it.u,1);
+  if(at<1||at+u-1>num(r.u,42))return false;
+  const oc=rOcc(r,skip||it);
+  for(let i=0;i<u;i++)if(oc[at+i])return false;
+  return true;
+}
+function rFreeSpot(r,u){                      /* 아래에서부터 빈 자리 찾기 */
+  for(let at=1;at+u-1<=num(r.u,42);at++)if(rFits(r,{u},at,null))return at;
+  return 0;
+}
+function rProblems(r){
+  const out=[], n=num(r.u,42);
+  (r.items||[]).forEach(it=>{
+    const at=num(it.at,1), u=num(it.u,1);
+    if(at<1||at+u-1>n)out.push({it,t:`랙 범위(1~${n}U) 밖입니다`});
+  });
+  for(let i=0;i<(r.items||[]).length;i++)for(let j=i+1;j<r.items.length;j++){
+    const a=r.items[i],b=r.items[j];
+    const a0=num(a.at,1),a1=a0+num(a.u,1)-1,b0=num(b.at,1),b1=b0+num(b.u,1)-1;
+    if(a0<=b1&&b0<=a1)out.push({it:b,t:`${a.n} 와 자리가 겹칩니다`});
+  }
+  return out;
+}
+function rBad(r){const p=rProblems(r),m=new Set();p.forEach(x=>m.add(x.it.id));return m;}
+
+/* ── 산출 (D1~D4) ── */
+function rCalc(r){
+  const used=(r.items||[]).reduce((a,x)=>a+num(x.u,1),0);
+  const pw=(r.items||[]).reduce((a,x)=>a+num(x.pw,0),0);
+  const wt=(r.items||[]).reduce((a,x)=>a+num(x.wt,0),0);
+  const pt=(r.items||[]).reduce((a,x)=>a+num(x.pt,0),0);
+  return{u:num(r.u,42),used,free:Math.max(0,num(r.u,42)-used),pw,wt,pt,n:(r.items||[]).length};
+}
+
+/* ══════════ 도면 ══════════ */
+/* 랙 입면도 — U 눈금 · 번호 · 장비 블록 (A2) */
+function rElev(r,cw,ch,opt){
+  opt=opt||{};
+  const n=num(r.u,42), H=n*UMM, W=num(r.w,600);
+  const F=fitBox(cw,ch,W,H,{l:TD+8,r:opt.noDim?6:TD+6,t:9,b:11});
+  const k=F.k,x=F.x,y=F.y,o=[];
+  const bad=rBad(r);
+  o.push(rc(x,y,W,H,.7*k));                              /* 랙 외곽 */
+  const rl=Math.min(30,W*.06);
+  o.push(ln(x+rl,y,x+rl,y+H,.35*k),ln(x+W-rl,y,x+W-rl,y+H,.35*k));   /* 마운팅 레일 */
+  for(let i=0;i<=n;i++){                                 /* U 눈금 */
+    const yy=y+H-i*UMM;
+    if(i<n)o.push(ln(x,yy,x+W,yy,.18*k,`${(1.4*k).toFixed(2)},${(1.2*k).toFixed(2)}`));
+    if(i<n&&(n<=24||(i+1)%2===1||i+1===n))
+      o.push(tx(x-1.6*k,yy-UMM/2+1*k,String(i+1),2.3*k,"end"));
+  }
+  (r.items||[]).forEach(it=>{
+    const at=num(it.at,1),u=num(it.u,1);
+    const iy=y+H-(at-1+u)*UMM, ih=u*UMM;
+    const sel=rSel===it.id, err=bad.has(it.id);
+    const fill=err?"#ffe2dc":(it.c||"#6b7280");
+    o.push(`<g data-rit="${it.id}" style="cursor:grab">`);
+    o.push(`<rect x="${(x+rl*.4).toFixed(2)}" y="${iy.toFixed(2)}" width="${(W-rl*.8).toFixed(2)}" height="${ih.toFixed(2)}" fill="${fill}" fill-opacity="${err?1:.92}" stroke="${err?"#b3261e":INK}" stroke-width="${((err?.8:.5)*k).toFixed(3)}"/>`);
+    const lx=x+rl*.4+3*k, ly=iy+ih/2+1.1*k;
+    o.push(`<text x="${lx.toFixed(2)}" y="${ly.toFixed(2)}" font-size="${(2.9*k).toFixed(2)}" font-family="${FF}" fill="${err?INK:"#ffffff"}" font-weight="600">${esc(it.n)}</text>`);
+    o.push(`<text x="${(x+W-rl*.4-3*k).toFixed(2)}" y="${ly.toFixed(2)}" font-size="${(2.5*k).toFixed(2)}" font-family="${FF}" fill="${err?INK:"#ffffff"}" text-anchor="end">${u}U · ${at}~${at+u-1}U</text>`);
+    if(sel)o.push(`<rect x="${(x+rl*.4-1.6*k).toFixed(2)}" y="${(iy-1.6*k).toFixed(2)}" width="${(W-rl*.8+3.2*k).toFixed(2)}" height="${(ih+3.2*k).toFixed(2)}" fill="none" stroke="#e2600d" stroke-width="${(1*k).toFixed(2)}" stroke-dasharray="${(3*k).toFixed(2)},${(2*k).toFixed(2)}"/>`);
+    o.push(`</g>`);
+  });
+  if(!opt.noDim){
+    o.push(dimV(y,y+H,x-TD*k,x,k,`${n}U = ${R(H)}`));
+    o.push(dimH(x,x+W,y+H+9*k,y+H,k));
+  }
+  o.push(tx(x+W/2,y-3.4*k,`${esc(r.name)}   ${n}U · ${R(W)}×${R(num(r.d,900))} · ${RTYPE[r.type]||""}`,3*k,"middle"));
+  return{s:F.s,w:F.w,h:F.h,svg:o.join("")};
+}
+/* 측면도 + 평면도 (C4) */
+function rSidePlan(r,cw,ch){
+  const n=num(r.u,42),H=n*UMM,W=num(r.w,600),D=num(r.d,900),GAP=40;
+  const pw=Math.max(W,D)+GAP+D, ph=Math.max(H,D+GAP+D*0);
+  const F=fitBox(cw,ch,D+GAP+W,H,{l:TD+6,r:TD+6,t:11,b:TD+9});
+  const k=F.k,x=F.x,y=F.y,o=[];
+  /* 측면도 — 왼쪽이 랙 전면 */
+  o.push(rc(x,y,D,H,.7*k));
+  o.push(ln(x+RAIL,y,x+RAIL,y+H,.3*k,`${(1.4*k).toFixed(2)},${(1.2*k).toFixed(2)}`));
+  (r.items||[]).forEach(it=>{
+    const at=num(it.at,1),u=num(it.u,1);
+    const iy=y+H-(at-1+u)*UMM, ih=u*UMM;
+    const dep=Math.min(D-RAIL-10,Math.max(120,num(it.dp,0)||(it.u>=2?420:300)));
+    o.push(`<rect x="${(x+RAIL).toFixed(2)}" y="${iy.toFixed(2)}" width="${dep.toFixed(2)}" height="${ih.toFixed(2)}" fill="${it.c||"#6b7280"}" fill-opacity=".85" stroke="${INK}" stroke-width="${(.4*k).toFixed(3)}"/>`);
+  });
+  o.push(tx(x+D/2,y-3.4*k,"측 면 도 (좌측에서 · 앞면이 왼쪽)",2.9*k,"middle"));
+  o.push(dimH(x,x+D,y+H+TD*k,y+H,k));
+  o.push(dimV(y,y+H,x-TD*k,x,k,`${n}U`));
+  /* 평면도 — 측면도 옆 가운데 높이에 놓는다 */
+  const px0=x+D+GAP, py0=y+Math.max(0,(H-D)/2);
+  o.push(rc(px0,py0,W,D,.7*k));
+  o.push(ln(px0,py0+RAIL,px0+W,py0+RAIL,.3*k,`${(1.4*k).toFixed(2)},${(1.2*k).toFixed(2)}`));
+  const rl=Math.min(30,W*.06);
+  o.push(ln(px0+rl,py0,px0+rl,py0+D,.3*k),ln(px0+W-rl,py0,px0+W-rl,py0+D,.3*k));
+  o.push(tx(px0+W/2,py0-3.4*k,"평 면 도 (위에서 · 앞면이 위쪽)",2.9*k,"middle"));
+  o.push(tx(px0+W/2,py0+D/2,`장비 폭 19" (482.6)`,2.8*k,"middle"));
+  o.push(dimH(px0,px0+W,py0+D+TD*k,py0+D,k));
+  o.push(dimV(py0,py0+D,px0+W+TD*k,px0+W,k,null,1));
+  return{s:F.s,w:F.w,h:F.h,svg:o.join("")};
+}
+/* 랙을 손도면 제작과 같은 표제란에 얹기 */
+function rPseudoCab(r){
+  const H=rRackH(r);
+  return{name:r.name,W:num(r.w,600),H:Math.round(H),D:num(r.d,900),qty:num(r.qty,1),
+    mat:`${RTYPE[r.type]||""} 19" 랙`,color:`${num(r.u,42)}U`,rev:0,
+    secs:[{n:"",h:Math.round(H)}],cols:[{n:"",w:num(r.w,600)}],parts:[]};
+}
+function rSheetHead(px){
+  const size=px?` width="${px}" height="${Math.round(px*SHEET.h/SHEET.w)}"`:` style="width:100%;height:auto"`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${SHEET.w} ${SHEET.h}"${size}>`
+    +`<rect x="0" y="0" width="${SHEET.w}" height="${SHEET.h}" fill="#ffffff"/>`;
+}
+/* C1 · C4 — 도면 시트 */
+function rDrawSVG(r,which,px){
+  const o=[rSheetHead(px)];
+  o.push(frame(RS,rPseudoCab(r),""));
+  const CA={x:12,y:12,w:273,h:154};
+  if(which==="fr"){
+    const b=rElev(r,CA.w*.52,CA.h);
+    const ox=CA.x+6, oy=CA.y+(CA.h-b.h*b.s)/2;
+    o.push(`<g data-relev="1" data-ox="${ox.toFixed(3)}" data-oy="${oy.toFixed(3)}" data-s="${b.s.toFixed(5)}" transform="translate(${ox.toFixed(3)},${oy.toFixed(3)}) scale(${b.s.toFixed(5)})">${b.svg}</g>`);
+    o.push(tx(ox+b.w*b.s/2,CA.y+CA.h+3,"( 랙 실 장 도 )",3.4,"middle"));
+    /* 오른쪽 : 산출 + 짧은 내역 */
+    const c=rCalc(r), bx=CA.x+CA.w*.56, by=CA.y+4, bw=CA.w*.44-4;
+    o.push(tx(bx,by+3,"실장 현황",3.6,"start"));
+    const rows=[["전체 / 사용 / 여유",`${c.u}U / ${c.used}U / ${c.free}U`],
+      ["장비 수량",`${c.n} 대`],["소비전력 합계",`${R(c.pw)} W  (${(c.pw/1000).toFixed(2)} kW)`],
+      ["중량 합계",`${R(c.wt)} kg`],["포트 수 합계",`${R(c.pt)} 포트`]];
+    let yy=by+8;
+    rows.forEach(([a,b2])=>{
+      o.push(rc(bx,yy,bw,7,.3));
+      o.push(tx(bx+2,yy+4.8,a,2.7,"start"));
+      o.push(tx(bx+bw-2,yy+4.8,b2,2.9,"end"));
+      yy+=7;
+    });
+    yy+=4;
+    o.push(tx(bx,yy,"실장 목록 (아래에서 위로)",3,"start")); yy+=4;
+    const list=(r.items||[]).slice().sort((a,b)=>num(a.at,1)-num(b.at,1));
+    list.slice(0,14).forEach(it=>{
+      o.push(rc(bx,yy,bw,6.2,.25));
+      o.push(tx(bx+2,yy+4.3,`${num(it.at,1)}~${num(it.at,1)+num(it.u,1)-1}U`,2.5,"start"));
+      o.push(tx(bx+16,yy+4.3,it.n,2.7,"start"));
+      o.push(tx(bx+bw-2,yy+4.3,`${num(it.u,1)}U`,2.5,"end"));
+      yy+=6.2;
+    });
+    if(!list.length){o.push(rc(bx,yy,bw,6.2,.25));o.push(tx(bx+bw/2,yy+4.3,"올린 장비가 없습니다",2.7,"middle"));}
+    if(list.length>14)o.push(tx(bx,yy+4.2,`※ 외 ${list.length-14}대는 내역서 참조`,2.4,"start"));
+  }else{
+    const b=rSidePlan(r,CA.w,CA.h-6);
+    const ox=CA.x+(CA.w-b.w*b.s)/2, oy=CA.y+(CA.h-6-b.h*b.s)/2;
+    o.push(`<g transform="translate(${ox.toFixed(3)},${oy.toFixed(3)}) scale(${b.s.toFixed(5)})">${b.svg}</g>`);
+    o.push(tx(CA.x+CA.w/2,CA.y+CA.h+3,"( 측 면 도 · 평 면 도 )",3.4,"middle"));
+  }
+  o.push(`</svg>`);
+  return o.join("");
+}
+/* C3 — 장비 실장 내역서 */
+function rBomSVG(r,px){
+  const o=[rSheetHead(px)];
+  o.push(frame(RS,rPseudoCab(r),""));
+  o.push(tx(14,21,"장비 실장 내역서",4.6,"start"));
+  o.push(tx(283,21,`${r.name}   ${num(r.u,42)}U · ${R(num(r.w,600))}×${R(num(r.d,900))}`,3,"end"));
+  const X=14,Y=26,W=269,RH=8.4;
+  const cx=[14,28,54,120,150,180,214,248,283];
+  const head=["No","U 위치","품          명","U","수량","전력 W","중량 kg","포트"];
+  o.push(rc(X,Y,W,RH,.5,null,"#eef2f6"));
+  head.forEach((h,i)=>o.push(tx((cx[i]+cx[i+1])/2,Y+5.7,h,2.8,"middle")));
+  let y=Y+RH;
+  const list=(r.items||[]).slice().sort((a,b)=>num(b.at,1)-num(a.at,1)).slice(0,16);
+  list.forEach((it,i)=>{
+    o.push(rc(X,y,W,RH,.3));
+    o.push(tx((cx[0]+cx[1])/2,y+5.7,String(i+1),3,"middle"));
+    o.push(tx((cx[1]+cx[2])/2,y+5.7,`${num(it.at,1)}~${num(it.at,1)+num(it.u,1)-1}U`,2.9,"middle"));
+    o.push(tx(cx[2]+3,y+5.7,it.n+(it.model?`  ${it.model}`:""),2.9,"start"));
+    o.push(tx((cx[3]+cx[4])/2,y+5.7,`${num(it.u,1)}U`,2.9,"middle"));
+    o.push(tx((cx[4]+cx[5])/2,y+5.7,"1",2.9,"middle"));
+    o.push(tx((cx[5]+cx[6])/2,y+5.7,R(num(it.pw,0)),2.9,"middle"));
+    o.push(tx((cx[6]+cx[7])/2,y+5.7,String(num(it.wt,0)),2.9,"middle"));
+    o.push(tx((cx[7]+cx[8])/2,y+5.7,R(num(it.pt,0)),2.9,"middle"));
+    y+=RH;
+  });
+  if(!list.length){o.push(rc(X,y,W,RH,.3));o.push(tx(X+W/2,y+5.7,"올린 장비가 없습니다",2.9,"middle"));y+=RH;}
+  const c=rCalc(r);
+  o.push(rc(X,y,W,RH,.5,null,"#eef2f6"));
+  o.push(tx(cx[2]+3,y+5.7,`합  계   장비 ${c.n}대 · 사용 ${c.used}U / ${c.u}U · 여유 ${c.free}U`,2.9,"start"));
+  o.push(tx((cx[5]+cx[6])/2,y+5.7,R(c.pw),2.9,"middle"));
+  o.push(tx((cx[6]+cx[7])/2,y+5.7,String(Math.round(c.wt*10)/10),2.9,"middle"));
+  o.push(tx((cx[7]+cx[8])/2,y+5.7,R(c.pt),2.9,"middle"));
+  y+=RH;
+  for(let i=1;i<cx.length-1;i++)o.push(ln(cx[i],Y,cx[i],y,.3));
+  o.push(rc(X,Y,W,y-Y,.6));
+  o.push(tx(14,y+6,`※ U 위치는 랙 바닥을 1U 로 하여 위로 셉니다. 1U = ${UMM}mm (19" EIA-310)`,2.6,"start"));
+  o.push(tx(14,y+11,`※ 소비전력 합계 ${(c.pw/1000).toFixed(2)} kW — 차단기·UPS 용량 확인 바랍니다.`,2.6,"start"));
+  if((r.items||[]).length>16)o.push(tx(14,y+16,`※ 장비 ${r.items.length}대 중 16대만 표시했습니다.`,2.6,"start"));
+  o.push(`</svg>`);
+  return o.join("");
+}
+function rCurSVG(px){
+  const r=rk();
+  return rView==="bom"?rBomSVG(r,px):rDrawSVG(r,rView,px);
+}
+
+/* ══════════ 확대 · 이동 ══════════ */
+function rZoomNow(){return SHEET.w/rVB.w;}
+function rContentRect(){
+  const el=$("#rsheet svg"); if(!el)return null;
+  const b=el.getBoundingClientRect();
+  if(!b.width||!b.height)return null;
+  const ar=SHEET.w/SHEET.h;
+  let w=b.width,h=b.height;
+  if(w/h>ar)w=h*ar; else h=w/ar;
+  return{left:b.left+(b.width-w)/2,top:b.top+(b.height-h)/2,width:w,height:h};
+}
+function rApplyZoom(){
+  if(SHEET.w/rVB.w<=1.001){rVB.x=0;rVB.y=0;}
+  else{
+    rVB.x=Math.max(-rVB.w*.35,Math.min(SHEET.w-rVB.w*.65,rVB.x));
+    rVB.y=Math.max(-rVB.h*.35,Math.min(SHEET.h-rVB.h*.65,rVB.y));
+  }
+  const svg=$("#rsheet svg");
+  if(svg)svg.setAttribute("viewBox",
+    `${rVB.x.toFixed(3)} ${rVB.y.toFixed(3)} ${rVB.w.toFixed(3)} ${rVB.h.toFixed(3)}`);
+  const z=rZoomNow();
+  $("#rzVal").textContent=Math.round(z*100)+"%";
+  $("#rzOut").disabled=z<=1.001;
+}
+function rZoomAt(z1,cx,cy){
+  const c=rContentRect(); if(!c)return;
+  const fx=(cx-c.left)/c.width, fy=(cy-c.top)/c.height;
+  const mx=rVB.x+fx*rVB.w, my=rVB.y+fy*rVB.h;
+  const z=Math.max(1,Math.min(24,z1));
+  if(Math.abs(z-rZoomNow())<1e-5)return;
+  rVB.w=SHEET.w/z; rVB.h=SHEET.h/z;
+  rVB.x=mx-fx*rVB.w; rVB.y=my-fy*rVB.h;
+  rApplyZoom();
+}
+function rZoomCenter(z){
+  const c=rContentRect();
+  if(!c){rZoomAt(z,0,0);return;}
+  rZoomAt(z,c.left+c.width/2,c.top+c.height/2);
+}
+function rPt(ev){
+  const c=rContentRect(); if(!c)return null;
+  return{x:rVB.x+(ev.clientX-c.left)/c.width*rVB.w,
+         y:rVB.y+(ev.clientY-c.top)/c.height*rVB.h};
+}
+
+/* ══════════ 장비 끌어 옮기기 (A3) ══════════ */
+const RPTS=new Map();
+let rDrag=null, rPan=null, rPinch=null;
+function rPdist(){const a=[...RPTS.values()];return Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);}
+$("#rsheet").addEventListener("pointerdown",ev=>{
+  if(ev.isPrimary){RPTS.clear();rPinch=null;rPan=null;}
+  RPTS.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
+  if(RPTS.size===2){rDrag=null;rPan=null;rPinch={d:rPdist()||1,z:rZoomNow()};ev.preventDefault();return;}
+  const g=ev.target.closest&&ev.target.closest("[data-rit]");
+  const pt=rPt(ev);
+  const sh=$("#rsheet");
+  if(!g||rView!=="fr"||!pt){                       /* 빈 곳 → 화면 이동 */
+    if(rZoomNow()<=1.001){ev.preventDefault();return;}
+    rPan={x:ev.clientX,y:ev.clientY,vx:rVB.x,vy:rVB.y};
+    sh.classList.add("grabbing");
+    try{sh.setPointerCapture(ev.pointerId);}catch(e){}
+    ev.preventDefault();return;
+  }
+  const id=g.getAttribute("data-rit");
+  const it=(rk().items||[]).find(x=>x.id===id); if(!it)return;
+  const host=g.closest("[data-relev]");
+  const sc=host?parseFloat(host.getAttribute("data-s")):1;
+  rPush();
+  rSel=id;
+  rDrag={it,sy:pt.y,at0:num(it.at,1),sc};
+  try{sh.setPointerCapture(ev.pointerId);}catch(e){}
+  ev.preventDefault();
+  rDrawOnly();
+});
+$("#rsheet").addEventListener("pointermove",ev=>{
+  if(RPTS.has(ev.pointerId))RPTS.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
+  if(rPinch&&RPTS.size===2){rZoomCenter(rPinch.z*(rPdist()/rPinch.d));ev.preventDefault();return;}
+  if(rPan){
+    const c=rContentRect(); if(!c)return;
+    rVB.x=rPan.vx-(ev.clientX-rPan.x)/c.width*rVB.w;
+    rVB.y=rPan.vy-(ev.clientY-rPan.y)/c.height*rVB.h;
+    rApplyZoom();ev.preventDefault();return;
+  }
+  if(!rDrag)return;
+  const pt=rPt(ev); if(!pt)return;
+  const dU=Math.round((rDrag.sy-pt.y)/rDrag.sc/UMM);   /* 위로 끌면 U 증가 */
+  const r=rk(), it=rDrag.it, want=rDrag.at0+dU;
+  const at=Math.max(1,Math.min(num(r.u,42)-num(it.u,1)+1,want));
+  if(at!==num(it.at,1)){it.at=at;rDrawOnly();}
+  ev.preventDefault();
+});
+["pointerup","pointercancel"].forEach(e=>window.addEventListener(e,ev=>{
+  RPTS.delete(ev.pointerId);
+  if(RPTS.size<2)rPinch=null;
+  if(rPan){rPan=null;$("#rsheet").classList.remove("grabbing");}
+  if(rDrag){
+    const r=rk(), it=rDrag.it;
+    if(!rFits(r,it,num(it.at,1),it)){                  /* A4 — 겹치면 되돌린다 */
+      it.at=rDrag.at0;
+      toast("그 자리에는 다른 장비가 있습니다",true);
+    }
+    rDrag=null; rSave(); rRender();
+  }
+}));
+$("#rsheet").addEventListener("wheel",ev=>{
+  if(!document.getElementById("rack")||$("#rack").hidden)return;
+  ev.preventDefault();
+  rZoomAt(rZoomNow()*(ev.deltaY<0?1.14:1/1.14),ev.clientX,ev.clientY);
+},{passive:false});
+
+/* ══════════ 화면 그리기 ══════════ */
+function rDrawOnly(){
+  $("#rsheetInner").innerHTML=rCurSVG();
+  rApplyZoom();
+}
+function rRender(){
+  const r=rk(), c=rCalc(r), pb=rProblems(r);
+  rDrawOnly();
+  $("#rTabs").innerHTML=RTABS.map(([v,l])=>
+    `<button class="chip" data-rv="${v}" aria-pressed="${rView===v}">${l}</button>`).join("");
+  $("#rackChips").innerHTML=RS.racks.map((x,i)=>
+    `<button class="chip" data-rcab="${i}" aria-pressed="${i===RS.cur}">${esc(x.name||(i+1)+"번 랙")}</button>`).join("")
+    +`<button class="chip add" id="rAddRack">+ 랙 추가</button>`
+    +(RS.racks.length>1?`<button class="chip add" id="rDelRack" style="color:var(--danger)">이 랙 삭제</button>`:"");
+  $("#rackNote").textContent=`${RS.racks.length}개 · ${num(r.qty,1)} EA`;
+  const set=(id,v)=>{const el=$(id);if(el&&document.activeElement!==el)el.value=v;};
+  set("#rName",r.name||""); set("#rU",num(r.u,42)); set("#rW",num(r.w,600));
+  set("#rD",num(r.d,900)); set("#rQty",num(r.qty,1));
+  set("#rSite",RS.site||""); set("#rNo",RS.no||""); set("#rDrawer",RS.drawer||"");
+  set("#rDate",RS.date||today);
+  $("#rType").innerHTML=Object.keys(RTYPE).map(t=>
+    `<button class="chip" data-rtype="${t}" aria-pressed="${(r.type||"stand")===t}">${RTYPE[t]}</button>`).join("");
+  $("#rPreset").innerHTML=RPRESET.map(([u,w,d])=>
+    `<button class="chip" data-rpre="${u},${w},${d}">${u}U ${w}×${d}</button>`).join("");
+  $("#rLib").innerHTML=rLib().map(x=>
+    `<button class="chip libchip" data-rlib="${x.t}"><i style="background:${x.c}"></i>${esc(x.n)} <b style="font-family:var(--mono);font-weight:500">${x.u}U</b></button>`).join("");
+  /* 실장 목록 — 위가 높은 U */
+  const bad=rBad(r);
+  const list=(r.items||[]).slice().sort((a,b)=>num(b.at,1)-num(a.at,1));
+  $("#rItems").innerHTML=list.length?list.map(it=>
+    `<div class="urow${bad.has(it.id)?" bad":""}" data-rrow="${it.id}">`
+    +`<span class="sw" style="background:${it.c||"#6b7280"}"></span>`
+    +`<span class="at">${num(it.at,1)}~${num(it.at,1)+num(it.u,1)-1}U</span>`
+    +`<span class="nm">${esc(it.n)}</span>`
+    +`<button data-rmove="${it.id}" data-d="1" title="위로">▲</button>`
+    +`<button data-rmove="${it.id}" data-d="-1" title="아래로">▼</button>`
+    +`<button data-rdel="${it.id}" title="삭제" style="color:var(--danger)">✕</button></div>`).join("")
+    :`<p class="note" style="font-size:12.5px;color:var(--ink-3);margin:0">위에서 장비를 눌러 올려 보세요.</p>`;
+  $("#rItemNote").textContent=`${c.n}대 · ${c.used}U 사용`;
+  $("#rWarn").innerHTML=pb.length
+    ? `<div class="warnbar"><b>⚠ 확인 필요 ${pb.length}건</b><br>`
+      +pb.slice(0,5).map(x=>`· ${esc(x.it.n)} — ${esc(x.t)}`).join("<br>")+`</div>`
+    : "";
+  const full=Math.round(c.used/Math.max(1,c.u)*100);
+  $("#rStats").innerHTML=
+    `<div><dt>전체</dt><dd>${c.u}<small>U</small></dd></div>`
+   +`<div><dt>사용</dt><dd>${c.used}<small>U · ${full}%</small></dd></div>`
+   +`<div${c.free<=0?' class="warn"':''}><dt>여유</dt><dd>${c.free}<small>U</small></dd></div>`
+   +`<div><dt>소비전력</dt><dd>${(c.pw/1000).toFixed(2)}<small>kW</small></dd></div>`
+   +`<div><dt>중량</dt><dd>${Math.round(c.wt*10)/10}<small>kg</small></dd></div>`
+   +`<div><dt>포트</dt><dd>${c.pt}<small>포트</small></dd></div>`;
+  $("#rCalcNote").textContent=`장비 ${c.n}대 합계`;
+  $("#rScale").textContent=`${num(r.u,42)}U · ${R(num(r.w,600))}×${R(rRackH(r))}×${R(num(r.d,900))}`;
+  $("#rPages").textContent=RTABS.find(t=>t[0]===rView)[1];
+  $("#rHint").innerHTML=rView==="fr"
+    ? `장비를 <b>위아래로 끌어</b> U 위치를 옮깁니다`
+    : rView==="sp" ? `측면도는 앞면이 왼쪽, 평면도는 앞면이 위쪽입니다`
+    : `내역서는 U 높은 순서로 정리됩니다`;
+}
+
+/* ══════════ 조작 ══════════ */
+function rAddItem(t){
+  const sp=rLib().find(x=>x.t===t); if(!sp)return;
+  const r=rk();
+  const at=rFreeSpot(r,num(sp.u,1));
+  if(!at){toast("빈 자리가 없습니다 — 랙 높이를 올리거나 장비를 지우세요",true);return;}
+  rPush();
+  const it={id:uid(),t:sp.t,n:sp.n,u:num(sp.u,1),at,pw:num(sp.pw,0),wt:num(sp.wt,0),
+    pt:num(sp.pt,0),c:sp.c};
+  r.items.push(it); rSel=it.id;
+  rSave(); rRender(); toast(`${sp.n} — ${at}U 에 올렸습니다`);
+}
+function rMove(id,d){
+  const r=rk(), it=(r.items||[]).find(x=>x.id===id); if(!it)return;
+  const at=num(it.at,1)+d;
+  if(at<1||at+num(it.u,1)-1>num(r.u,42)){toast("랙 끝입니다",true);return;}
+  if(!rFits(r,it,at,it)){toast("그 자리에는 다른 장비가 있습니다",true);return;}
+  rPush(); it.at=at; rSel=id; rSave(); rRender();
+}
+function rReset(){
+  if(!confirm("랙 실장을 처음 상태로 되돌릴까요? 올린 장비가 모두 지워집니다."))return;
+  rPush();
+  RS.racks=[newRack()]; RS.cur=0; rSel=null; rView="fr";
+  rVB={x:0,y:0,w:SHEET.w,h:SHEET.h};
+  rSave(); rRender(); toast("처음 상태로 되돌렸습니다");
+}
+function rOpenLib(){
+  $("#nlName").value=""; $("#nlU").value="1"; $("#nlPw").value="0";
+  $("#nlWt").value="0"; $("#nlPt").value="0";
+  $("#nlCo").innerHTML=RCOLORS.map((c,i)=>`<option value="${c}"${i?"":" selected"}>${["주황","파랑","초록","회색","갈색","적갈","남색","연회색"][i]}</option>`).join("");
+  $("#rlibm").hidden=false;
+  setTimeout(()=>$("#nlName").focus(),60);
+}
+function rSaveLib(){
+  const n=$("#nlName").value.trim();
+  if(!n){toast("장비 이름을 넣어 주세요",true);$("#nlName").focus();return;}
+  const t="my"+uid().slice(0,6);
+  const sp={t,n,u:Math.max(1,num($("#nlU").value,1)),pw:num($("#nlPw").value,0),
+    wt:num($("#nlWt").value,0),pt:num($("#nlPt").value,0),c:$("#nlCo").value||"#6b7280"};
+  RS.lib=(RS.lib||[]).concat([sp]);
+  $("#rlibm").hidden=true;
+  rSave(); rAddItem(t);
+}
+
+/* ══════════ 내보내기 ══════════ */
+let rOutFmt="png", rOutScope="cur";
+function rOutHint(){
+  const canShare=!!(navigator.canShare&&navigator.share);
+  const l=[];
+  if(rOutFmt==="png")l.push(rOutScope==="all"
+    ? "실장도 · 측면·평면도 · 내역서 3장을 이미지로 만들어 한 번에 보냅니다."
+    : "지금 보는 시트 1장이 이미지로 만들어집니다. 카톡에 바로 붙습니다.");
+  else l.push(rOutScope==="all"
+    ? `실장도 · 측면·평면도 · 내역서를 ${RS.paper||"A4"} 3쪽 PDF로 묶습니다.`
+    : `지금 보는 시트 1장을 ${RS.paper||"A4"} PDF로 만듭니다.`);
+  l.push(canShare?"‘공유’를 누르면 카카오톡·메일 목록이 열립니다."
+    :"이 환경에서는 공유창이 열리지 않을 수 있습니다. ‘기기에 저장’ 후 카톡에서 첨부하세요.");
+  $("#rOutHint").innerHTML=l.map(esc).join("<br>");
+}
+function rFileBase(){
+  const r=rk(),tag=RTABS.find(t=>t[0]===rView)[1];
+  return [RS.site,r.name,tag].filter(Boolean).join("_").replace(/[\\/:*?"<>|]/g,"")||"랙실장도";
+}
+function rPages(){
+  const r=rk();
+  return rOutScope==="all"?[rDrawSVG(r,"fr",2000),rDrawSVG(r,"sp",2000),rBomSVG(r,2000)]
+                          :[rCurSVG(2000)];
+}
+async function rBuildOut(){
+  const P=paper();
+  const pages=rPages();
+  if(rOutFmt==="png"){
+    const files=[];
+    const nm=["실장도","측면평면도","내역서"];
+    for(let i=0;i<pages.length;i++){
+      const png=await toPNG(pages[i],P.px/SHEET.w);
+      files.push({blob:dataURLtoBlob(png),
+        name:(rOutScope==="all"?rFileBase().replace(/_[^_]*$/,"")+"_"+nm[i]:rFileBase())+`_${RS.paper||"A4"}.png`,
+        type:"image/png"});
+    }
+    return{files,n:files.length};
+  }
+  if(!window.jspdf)throw new Error("PDF 모듈을 불러오지 못했습니다");
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:"landscape",unit:"mm",format:(RS.paper||"A4").toLowerCase()});
+  for(let i=0;i<pages.length;i++){
+    const png=await toPNG(pages[i],P.px/SHEET.w*.85);
+    if(i)doc.addPage();
+    doc.addImage(png,"PNG",0,0,P.w,P.h);
+  }
+  return{files:[{blob:doc.output("blob"),name:rFileBase()+`_${RS.paper||"A4"}.pdf`,
+    type:"application/pdf"}],n:pages.length};
+}
+async function rDoOut(share){
+  const btn=share?$("#rOutShare"):$("#rOutSave");
+  const old=btn.textContent; btn.disabled=true; btn.textContent="만드는 중…";
+  try{
+    const o=await rBuildOut();
+    const fl=o.files.map(x=>new File([x.blob],x.name,{type:x.type}));
+    if(share&&navigator.canShare&&navigator.canShare({files:fl})){
+      try{
+        await navigator.share({files:fl,title:o.files[0].name});
+        $("#routm").hidden=true; toast(fl.length>1?`${fl.length}장 공유했습니다`:"공유했습니다");
+        btn.disabled=false; btn.textContent=old; return;
+      }catch(e){ if(e&&e.name==="AbortError"){btn.disabled=false;btn.textContent=old;return;} }
+      toast("이 환경에서는 공유창을 열 수 없어 저장으로 진행합니다",true);
+    }
+    if(DL){
+      let done=0;
+      for(const x of o.files){
+        try{await DL.save({filename:x.name,data:x.blob});done++;}
+        catch(e){if(e&&e.code==="declined")break;}
+      }
+      if(done){$("#routm").hidden=true;toast(done>1?`${done}장 저장했습니다`:"저장했습니다");}
+      btn.disabled=false; btn.textContent=old; return;
+    }
+    const x0=o.files[0];
+    if(x0.type==="image/png"){
+      const fr=new FileReader();
+      fr.onload=()=>showImg(fr.result,"이미지를 길게 눌러(PC는 우클릭) 저장한 뒤 카톡에 첨부하세요.");
+      fr.readAsDataURL(x0.blob);
+    }else fallbackPDF(x0.blob,x0.name);
+  }catch(e){alert("만들지 못했습니다: "+e.message);}
+  btn.disabled=false; btn.textContent=old;
+}
+
+/* ══════════ 입력 ══════════ */
+document.addEventListener("click",ev=>{
+  const rackOn=!$("#rack").hidden;
+  const t=ev.target.closest&&ev.target.closest("button,[data-rclose],[data-rrow]");
+  if(!t)return;
+  if(t.dataset&&t.dataset.rclose){$("#"+t.dataset.rclose).hidden=true;return;}
+  if(!rackOn)return;                                 /* 랙 화면일 때만 */
+  const d=t.dataset||{};
+  if(d.rv){rView=d.rv;rVB={x:0,y:0,w:SHEET.w,h:SHEET.h};rRender();return;}
+  if(d.rcab){RS.cur=+d.rcab;rSel=null;rSave();rRender();return;}
+  if(t.id==="rAddRack"){rPush();const n=newRack("랙 "+(RS.racks.length+1));
+    const r=rk();n.u=r.u;n.w=r.w;n.d=r.d;n.type=r.type;RS.racks.push(n);RS.cur=RS.racks.length-1;
+    rSave();rRender();return;}
+  if(t.id==="rDelRack"){
+    if(RS.racks.length<2)return;
+    if(!confirm(`${rk().name} 을(를) 삭제할까요?`))return;
+    rPush();RS.racks.splice(RS.cur,1);RS.cur=Math.max(0,RS.cur-1);rSave();rRender();return;}
+  if(d.rtype){rPush();rk().type=d.rtype;rSave();rRender();return;}
+  if(d.rpre){const[u,w,dd]=d.rpre.split(",").map(Number);rPush();
+    const r=rk();r.u=u;r.w=w;r.d=dd;
+    (r.items||[]).forEach(it=>{if(num(it.at,1)+num(it.u,1)-1>u)it.at=Math.max(1,u-num(it.u,1)+1);});
+    rSave();rRender();return;}
+  if(d.rlib){rAddItem(d.rlib);return;}
+  if(t.id==="rLibAdd"){rOpenLib();return;}
+  if(t.id==="nlSave"){rSaveLib();return;}
+  if(d.rmove){rMove(d.rmove,+d.d);return;}
+  if(d.rdel){
+    const r=rk(),i=(r.items||[]).findIndex(x=>x.id===d.rdel);
+    if(i<0)return;
+    rPush();const nm=r.items[i].n;r.items.splice(i,1);
+    if(rSel===d.rdel)rSel=null;
+    rSave();rRender();toast(`${nm} 을(를) 지웠습니다`);return;}
+  if(d.rrow){rSel=d.rrow;rDrawOnly();return;}
+  if(t.id==="rzIn"){rZoomCenter(rZoomNow()*1.35);return;}
+  if(t.id==="rzOut"){rZoomCenter(rZoomNow()/1.35);return;}
+  if(t.id==="rzFit"){rVB={x:0,y:0,w:SHEET.w,h:SHEET.h};rApplyZoom();return;}
+  if(t.id==="rBtnUndo"){rUndo();return;}
+  if(t.id==="rBtnReset"){rReset();return;}
+  if(t.id==="rBtnFs"||t.id==="rBtnZoom"){
+    document.body.classList.toggle("fs");
+    const on=document.body.classList.contains("fs");
+    $("#rBtnFs").innerHTML=on?"✕"
+      :`<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>`;
+    $("#rBtnFs").title=on?"전체화면 끝내기":"도면 전체화면";
+    setTimeout(()=>{rDrawOnly();},30);return;}
+  if(t.id==="rBtnOut"){rOutHint();$("#routm").hidden=false;return;}
+  if(d.rfmt){rOutFmt=d.rfmt;
+    $("#rOutFmt").querySelectorAll(".chip").forEach(b=>b.setAttribute("aria-pressed",b.dataset.rfmt===rOutFmt));
+    rOutHint();return;}
+  if(d.rsc){rOutScope=d.rsc;
+    $("#rOutScope").querySelectorAll(".chip").forEach(b=>b.setAttribute("aria-pressed",b.dataset.rsc===rOutScope));
+    rOutHint();return;}
+  if(t.id==="rOutSave"){rDoOut(false);return;}
+  if(t.id==="rOutShare"){rDoOut(true);return;}
+  if(t.id==="rackHelp"){
+    alert("캐비닛 랙 실장 — 사용법\n\n"
+      +"1. 랙 규격을 고릅니다 (높이 U · 폭 · 깊이 · 형식)\n"
+      +"2. ‘장비 올리기’에서 장비를 누르면 빈 자리에 올라갑니다\n"
+      +"3. 도면에서 장비를 위아래로 끌어 U 위치를 옮깁니다\n"
+      +"   겹치거나 랙 밖으로 나가면 빨갛게 표시되고 제자리로 돌아갑니다\n"
+      +"4. 없는 장비는 ‘장비 직접 등록’으로 만들면 계속 남습니다\n"
+      +"5. 아래 ‘공유 · 저장’ 으로 실장도 · 측면평면도 · 내역서를 보냅니다\n\n"
+      +"1U = 44.45mm (19\" EIA-310). U 는 랙 바닥이 1U 입니다.");
+    return;}
+});
+document.addEventListener("input",ev=>{
+  if($("#rack").hidden)return;
+  const id=ev.target.id, v=ev.target.value;
+  const r=rk();
+  const numf={rU:"u",rW:"w",rD:"d",rQty:"qty"};
+  if(id==="rName"){r.name=v;rSave();$("#rackChips").querySelector(`[data-rcab="${RS.cur}"]`).textContent=v||"랙";rDrawOnly();return;}
+  if(numf[id]){
+    const k=numf[id];
+    r[k]=Math.max(id==="rU"?1:1,num(v,r[k]));
+    if(id==="rU")(r.items||[]).forEach(it=>{
+      if(num(it.at,1)+num(it.u,1)-1>r.u)it.at=Math.max(1,r.u-num(it.u,1)+1);});
+    rSave();rRender();return;
+  }
+  if(id==="rSite"){RS.site=v;rSave();rDrawOnly();return;}
+  if(id==="rNo"){RS.no=v;rSave();rDrawOnly();return;}
+  if(id==="rDrawer"){RS.drawer=v;rSave();rDrawOnly();return;}
+  if(id==="rDate"){RS.date=v;rSave();rDrawOnly();return;}
+});
+window.addEventListener("resize",()=>{if(!$("#rack").hidden)rDrawOnly();});
+rLoad();
+
 migrate(S); render(); boot();
 </script>
