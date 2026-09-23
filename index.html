@@ -361,7 +361,8 @@ body.in-app #home,body.in-app #rack{display:none!important}
   <div class="sheetbox">
     <div class="zoombar">
       <button class="btn gho" id="rzOut" aria-label="축소">−</button>
-      <button class="btn gho" id="rzFit">100%</button>
+      <button class="btn gho" id="rzFit">전체</button>
+      <button class="btn gho" id="rzWide" title="랙 폭에 맞춰 크게">↔ 폭</button>
       <button class="btn gho" id="rzIn" aria-label="확대">+</button>
       <span id="rzVal">100%</span>
       <span style="flex:1"></span>
@@ -370,6 +371,7 @@ body.in-app #home,body.in-app #rack{display:none!important}
       <button class="btn gho ib" id="rBtnReset" title="처음 상태로 초기화" aria-label="초기화"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9.5 12.5 14 17M14 12.5 9.5 17"/></svg><span class="lbl">초기화</span></button>
     </div>
     <div class="sheet" id="rsheet"><div id="rsheetInner"></div></div>
+    <div id="rSelBar" hidden></div>
     <div class="sheethint">
       <span id="rHint">장비를 <b>위아래로 끌어</b> U 위치를 옮깁니다</span>
       <span id="rScale" style="font-family:var(--mono);white-space:nowrap"></span>
@@ -402,7 +404,8 @@ body.in-app #home,body.in-app #rack{display:none!important}
     <div class="chips" id="rLib"></div>
     <div class="row" style="margin-top:9px">
       <button class="chip add" id="rLibAdd">+ 장비 직접 등록</button>
-      <span class="note" style="font-size:11.5px;color:var(--ink-3)">등록한 장비는 계속 목록에 남습니다</span>
+      <button class="chip add" id="rLibMan">장비 목록 관리</button>
+      <span class="note" style="font-size:11.5px;color:var(--ink-3)">이름·U·전력을 고치거나 숨길 수 있습니다</span>
     </div>
   </section>
 
@@ -441,7 +444,7 @@ body.in-app #home,body.in-app #rack{display:none!important}
 
 <div class="modal" id="rlibm" hidden>
   <div class="mbox">
-    <div class="mhd"><h3 style="margin:0;font-size:16px">장비 직접 등록</h3>
+    <div class="mhd"><h3 style="margin:0;font-size:16px" id="nlTitle">장비 직접 등록</h3>
       <button class="btn gho" data-rclose="rlibm">닫기</button></div>
     <div class="grid">
       <div class="f wide"><label for="nlName">장비 이름</label><input id="nlName" placeholder="예: 광단자함 48C"></div>
@@ -456,6 +459,43 @@ body.in-app #home,body.in-app #rack{display:none!important}
     </div>
     <p class="note" style="font-size:12px;color:var(--ink-3);margin-top:9px">
       전력·중량·포트는 비워도 됩니다. 나중에 산출표에서 합계로 쓰입니다.</p>
+  </div>
+</div>
+
+<div class="modal" id="rmanm" hidden>
+  <div class="mbox">
+    <div class="mhd"><h3 style="margin:0;font-size:16px">장비 목록 관리</h3>
+      <button class="btn gho" data-rclose="rmanm">닫기</button></div>
+    <p class="note" style="font-size:12px;color:var(--ink-3);margin:0 0 10px">
+      이름·U·전력·중량·포트를 고칠 수 있습니다. 안 쓰는 장비는 <b>숨김</b>으로 목록에서 치웁니다.
+      이미 올려 둔 장비는 그대로 남습니다.</p>
+    <div class="plist" id="rManList"></div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn" id="rManAdd" style="flex:1">+ 새 장비</button>
+      <button class="btn gho" id="rManReset">기본 12종 되돌리기</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="rprem" hidden>
+  <div class="mbox">
+    <div class="mhd"><h3 style="margin:0;font-size:16px">규격 직접 등록</h3>
+      <button class="btn gho" data-rclose="rprem">닫기</button></div>
+    <p class="note" style="font-size:12px;color:var(--ink-3);margin:0 0 10px">
+      회사 기성품 규격을 넣어 두면 다음부터 한 번에 고를 수 있습니다.</p>
+    <div class="grid">
+      <div class="f wide"><label for="npName">규격 이름</label><input id="npName" placeholder="예: 통신랙 42U 표준"></div>
+      <div class="f"><label for="npU">높이 U</label><input id="npU" inputmode="numeric" value="42"></div>
+      <div class="f"><label for="npW">폭 W</label><input id="npW" inputmode="numeric" value="600"></div>
+      <div class="f"><label for="npD">깊이 D</label><input id="npD" inputmode="numeric" value="900"></div>
+      <div class="f"><label for="npT">형식</label><select id="npT">
+        <option value="stand">스탠드형</option><option value="wall">벽부형</option><option value="open">오픈랙</option>
+      </select></div>
+    </div>
+    <div class="plist" id="rPreList" style="margin-top:12px"></div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn pri" id="npSave" style="flex:1">등록하고 적용</button>
+    </div>
   </div>
 </div>
 
@@ -3136,7 +3176,17 @@ const UMM=44.45;                       /* 1U */
 const RAIL=15.9;                       /* 레일에서 장비 앞면까지 여유 (표기용) */
 const RLS="rackplan.v1";
 const RTYPE={wall:"벽부형",stand:"스탠드형",open:"오픈랙"};
-const RPRESET=[[42,600,900],[42,600,1000],[22,600,600],[22,600,450],[12,600,450],[45,700,1000]];
+/* 기본 규격 — 회사 기성품 규격표를 받으면 이 목록만 바꾸면 됩니다.
+   [이름, 높이U, 폭W, 깊이D, 형식] */
+const RPRESET0=[
+ ["42U 600×900",42,600,900,"stand"],
+ ["42U 600×1000",42,600,1000,"stand"],
+ ["22U 600×600",22,600,600,"stand"],
+ ["22U 600×450",22,600,450,"wall"],
+ ["12U 600×450",12,600,450,"wall"],
+ ["45U 700×1000",45,700,1000,"stand"]
+];
+function rPresets(){return RPRESET0.concat(RS.presets||[]);}
 /* 기본 장비 12종 — 이름 · U · 소비전력W · 중량kg · 포트수 · 색 */
 const RLIB0=[
  {t:"odf",  n:"광단자함 ODF", u:3, pw:0,   wt:12, pt:24, c:"#e2600d"},
@@ -3153,14 +3203,21 @@ const RLIB0=[
  {t:"blank",n:"블랭크 패널",  u:1, pw:0,   wt:.5, pt:0,  c:"#c2ccd6"}
 ];
 const RCOLORS=["#e2600d","#2b6cb0","#3f7f5f","#6b7280","#8a6d3b","#7a3b3b","#334155","#c2ccd6"];
-const RTABS=[["fr","실장도"],["sp","측면·평면도"],["bom","실장 내역서"]];
+const RTABS=[["work","랙 보기"],["fr","실장도 (A4)"],["sp","측면·평면도"],["bom","실장 내역서"]];
+const RA4=["fr","sp","bom"];                 /* 도각(A4)에 얹는 시트 */
 
 function newRack(nm){return{id:uid(),name:nm||"통신랙",u:42,w:600,d:900,type:"stand",qty:1,items:[]};}
 let RS={site:"",drawer:"",no:"",date:today,paper:"A4",racks:[newRack()],cur:0,lib:[]};
-let rView="fr", rHist=[], rSaveT=0, rSel=null, rVB={x:0,y:0,w:SHEET.w,h:SHEET.h};
+let rView="work", rHist=[], rSaveT=0, rSel=null, rVB={x:0,y:0,w:SHEET.w,h:SHEET.h};
 function rk(){return RS.racks[Math.min(RS.cur,RS.racks.length-1)]||RS.racks[0];}
-function rLib(){return RLIB0.concat(RS.lib||[]);}
-function rSpec(it){return RLIB0.concat(RS.lib||[]).find(x=>x.t===it.t)||it;}
+/* 기본 12종 + 직접 등록한 것. RS.over 로 이름·U·전력 등을 덮어쓰고 숨길 수 있다 */
+function rLibAll(){
+  const ov=RS.over||{};
+  return RLIB0.concat(RS.lib||[]).map(x=>Object.assign({},x,ov[x.t]||{}));
+}
+function rLib(){return rLibAll().filter(x=>!x.hide);}
+function rSpec(t){return rLibAll().find(x=>x.t===t)||null;}
+function rIsMine(t){return (RS.lib||[]).some(x=>x.t===t);}
 function rRackH(r){return num(r.u,42)*UMM;}           /* 레일 높이(mm) */
 
 /* ── 저장 ── */
@@ -3400,27 +3457,94 @@ function rBomSVG(r,px){
   o.push(`</svg>`);
   return o.join("");
 }
+/* ── 랙 보기 — 도각 없이 랙과 장비만 크게 ─────────────────────
+   글자·선 굵기는 랙 폭(W) 기준으로 잡아 어떤 규격에서도 같은 비율로 읽힌다. */
+function rWorkSVG(){
+  const r=rk(), n=num(r.u,42), H=n*UMM, W=num(r.w,600);
+  const GL=W*.22, GR=W*.05, TOP=W*.13, BOT=W*.17;
+  const o=[], bad=rBad(r);
+  const f=W/34;                                  /* 기준 글자 크기 */
+  const sw=W/420;                                /* 기준 선 굵기 */
+  const T=(x,y,t,sz,an,col,bold)=>`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${sz.toFixed(1)}" `
+    +`font-family="${FF}" text-anchor="${an||"middle"}" fill="${col||INK}"${bold?' font-weight="700"':''}>${esc(t)}</text>`;
+  /* 랙 외곽 · 레일 */
+  o.push(rc(0,0,W,H,sw*2.2));
+  const rl=W*.055;
+  o.push(ln(rl,0,rl,H,sw),ln(W-rl,0,W-rl,H,sw));
+  /* U 눈금 · 번호 (양쪽) */
+  for(let i=0;i<n;i++){
+    const yy=H-i*UMM;
+    if(i)o.push(ln(0,yy,W,yy,sw*.6,`${(f*.45).toFixed(1)},${(f*.4).toFixed(1)}`));
+    o.push(T(-GL*.42,yy-UMM*.34,String(i+1),f*.78,"end",  "#77838d"));
+    o.push(T(W+GR*.9,yy-UMM*.34,String(i+1),f*.62,"start","#9aa7b3"));
+  }
+  /* 장비 */
+  (r.items||[]).forEach(it=>{
+    const at=num(it.at,1),u=num(it.u,1);
+    const iy=H-(at-1+u)*UMM, ih=u*UMM;
+    const sel=rSel===it.id, err=bad.has(it.id);
+    const x0=rl*.5, wq=W-rl;
+    o.push(`<g data-rit="${it.id}" style="cursor:grab">`);
+    o.push(`<rect x="${x0.toFixed(1)}" y="${iy.toFixed(1)}" width="${wq.toFixed(1)}" height="${ih.toFixed(1)}" rx="${(f*.15).toFixed(1)}" fill="${err?"#ffe2dc":(it.c||"#6b7280")}" stroke="${err?"#b3261e":INK}" stroke-width="${(sw*(err?2.2:1.2)).toFixed(2)}"/>`);
+    const tc=err?INK:"#ffffff";
+    o.push(T(x0+f*.6,iy+ih/2+f*.34,it.n,Math.min(f,ih*.52),"start",tc,1));
+    o.push(T(x0+wq-f*.6,iy+ih/2+f*.34,`${u}U · ${at}~${at+u-1}U`,Math.min(f*.72,ih*.42),"end",tc));
+    /* 손잡이 — 끌 수 있다는 표시 */
+    const gx=x0+wq/2, gy=iy+ih/2;
+    for(let g=-1;g<=1;g++)o.push(ln(gx-f*.5,gy+g*f*.28,gx+f*.5,gy+g*f*.28,sw*1.1));
+    if(sel)o.push(`<rect x="${(x0-f*.32).toFixed(1)}" y="${(iy-f*.32).toFixed(1)}" width="${(wq+f*.64).toFixed(1)}" height="${(ih+f*.64).toFixed(1)}" rx="${(f*.25).toFixed(1)}" fill="none" stroke="#e2600d" stroke-width="${(sw*2).toFixed(2)}" stroke-dasharray="${(f*.6).toFixed(1)},${(f*.4).toFixed(1)}"/>`);
+    o.push(`</g>`);
+  });
+  /* 빈 자리 안내 */
+  const oc=rOcc(r);
+  let run=0;
+  for(let i=1;i<=n+1;i++){
+    if(i<=n&&!oc[i]){run++;continue;}
+    if(run>=3){
+      const top=i-run, yy=H-(top-1+run)*UMM;
+      o.push(T(W/2,yy+run*UMM/2+f*.3,`빈 자리 ${run}U`,f*.8,"middle","#9aa7b3"));
+    }
+    run=0;
+  }
+  /* 머리·발치 */
+  o.push(T(W/2,-TOP*.35,`${r.name}`,f*1.25,"middle",INK,1));
+  o.push(T(W/2,H+BOT*.45,`${n}U · ${R(W)} × ${R(num(r.d,900))} · ${RTYPE[r.type]||""}`,f*.85,"middle","#44545f"));
+  const c=rCalc(r);
+  o.push(T(W/2,H+BOT*.85,`사용 ${c.used}U · 여유 ${c.free}U · ${(c.pw/1000).toFixed(2)}kW · ${Math.round(c.wt*10)/10}kg`,f*.8,"middle","#77838d"));
+  const vb=[-GL,-TOP,W+GL+GR,H+TOP+BOT];
+  return{vb,svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb.map(v=>v.toFixed(1)).join(" ")}" `
+    +`preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%">`
+    +`<rect x="${vb[0].toFixed(1)}" y="${vb[1].toFixed(1)}" width="${vb[2].toFixed(1)}" height="${vb[3].toFixed(1)}" fill="#ffffff"/>`
+    +o.join("")+`</svg>`};
+}
 function rCurSVG(px){
   const r=rk();
+  if(rView==="work")return rWorkSVG().svg;
   return rView==="bom"?rBomSVG(r,px):rDrawSVG(r,rView,px);
+}
+/* 지금 화면의 기준 도면 영역 — 랙 보기는 랙 크기, 나머지는 A4 */
+function rBase(){
+  if(rView==="work"){const v=rWorkSVG().vb;return{x:v[0],y:v[1],w:v[2],h:v[3]};}
+  return{x:0,y:0,w:SHEET.w,h:SHEET.h};
 }
 
 /* ══════════ 확대 · 이동 ══════════ */
-function rZoomNow(){return SHEET.w/rVB.w;}
+function rZoomNow(){return rBase().w/rVB.w;}
 function rContentRect(){
   const el=$("#rsheet svg"); if(!el)return null;
   const b=el.getBoundingClientRect();
   if(!b.width||!b.height)return null;
-  const ar=SHEET.w/SHEET.h;
+  const ar=rVB.w/rVB.h;                    /* 지금 보이는 영역의 가로세로비 */
   let w=b.width,h=b.height;
   if(w/h>ar)w=h*ar; else h=w/ar;
   return{left:b.left+(b.width-w)/2,top:b.top+(b.height-h)/2,width:w,height:h};
 }
 function rApplyZoom(){
-  if(SHEET.w/rVB.w<=1.001){rVB.x=0;rVB.y=0;}
+  const B=rBase();
+  if(B.w/rVB.w<=1.001){rVB.x=B.x;rVB.y=B.y;}
   else{
-    rVB.x=Math.max(-rVB.w*.35,Math.min(SHEET.w-rVB.w*.65,rVB.x));
-    rVB.y=Math.max(-rVB.h*.35,Math.min(SHEET.h-rVB.h*.65,rVB.y));
+    rVB.x=Math.max(B.x-rVB.w*.35,Math.min(B.x+B.w-rVB.w*.65,rVB.x));
+    rVB.y=Math.max(B.y-rVB.h*.35,Math.min(B.y+B.h-rVB.h*.65,rVB.y));
   }
   const svg=$("#rsheet svg");
   if(svg)svg.setAttribute("viewBox",
@@ -3433,10 +3557,23 @@ function rZoomAt(z1,cx,cy){
   const c=rContentRect(); if(!c)return;
   const fx=(cx-c.left)/c.width, fy=(cy-c.top)/c.height;
   const mx=rVB.x+fx*rVB.w, my=rVB.y+fy*rVB.h;
+  const B=rBase();
   const z=Math.max(1,Math.min(24,z1));
   if(Math.abs(z-rZoomNow())<1e-5)return;
-  rVB.w=SHEET.w/z; rVB.h=SHEET.h/z;
+  rVB.w=B.w/z; rVB.h=B.h/z;
   rVB.x=mx-fx*rVB.w; rVB.y=my-fy*rVB.h;
+  rApplyZoom();
+}
+/* 랙 폭에 꽉 맞춰 크게 — 세로로는 끌어서 훑는다 */
+function rFitWidth(){
+  const el=$("#rsheet"); if(!el)return;
+  const b=el.getBoundingClientRect(); if(!b.width||!b.height)return;
+  const r=rk(), W=num(r.w,600), H=num(r.u,42)*UMM;
+  const B=rBase();
+  const GL=W*.22;                                  /* 왼쪽 U 번호 칸은 남긴다 */
+  const w=W+GL*1.08, h=Math.max(UMM*3,w*b.height/b.width);
+  if(h>=B.h*.98){rVB=Object.assign({},B);rApplyZoom();return;}   /* 이미 다 보인다 */
+  rVB={x:-GL, y:Math.max(-H*.04,H-h+UMM*.6), w, h};
   rApplyZoom();
 }
 function rZoomCenter(z){
@@ -3461,7 +3598,8 @@ $("#rsheet").addEventListener("pointerdown",ev=>{
   const g=ev.target.closest&&ev.target.closest("[data-rit]");
   const pt=rPt(ev);
   const sh=$("#rsheet");
-  if(!g||rView!=="fr"||!pt){                       /* 빈 곳 → 화면 이동 */
+  const canDrag=rView==="work"||rView==="fr";
+  if(!g||!canDrag||!pt){                           /* 빈 곳 → 화면 이동 */
     if(rZoomNow()<=1.001){ev.preventDefault();return;}
     rPan={x:ev.clientX,y:ev.clientY,vx:rVB.x,vy:rVB.y};
     sh.classList.add("grabbing");
@@ -3516,7 +3654,25 @@ $("#rsheet").addEventListener("wheel",ev=>{
 },{passive:false});
 
 /* ══════════ 화면 그리기 ══════════ */
+/* 보는 대상(뷰·랙 규격)이 바뀌면 화면을 그 크기에 다시 맞춘다 */
+let rVBkey="";
+function rSyncVB(){
+  const r=rk();
+  const key=[rView,r.id,num(r.u,42),num(r.w,600),num(r.d,900)].join("|");
+  if(key===rVBkey)return;
+  rVBkey=key; rVB=Object.assign({},rBase());
+}
 function rDrawOnly(){
+  rSyncVB();
+  const sh=$("#rsheet"), fs=document.body.classList.contains("fs");
+  if(rView==="work"&&!fs){                       /* 랙은 길쭉하니 화면을 세로로 크게 */
+    sh.style.aspectRatio="auto";
+    sh.style.height=Math.max(340,Math.min(Math.round(window.innerHeight*.62),820))+"px";
+    $("#rsheetInner").style.height="100%";
+  }else{
+    sh.style.aspectRatio=fs?"auto":"";
+    sh.style.height=""; $("#rsheetInner").style.height=fs?"100%":"";
+  }
   $("#rsheetInner").innerHTML=rCurSVG();
   rApplyZoom();
 }
@@ -3537,8 +3693,10 @@ function rRender(){
   set("#rDate",RS.date||today);
   $("#rType").innerHTML=Object.keys(RTYPE).map(t=>
     `<button class="chip" data-rtype="${t}" aria-pressed="${(r.type||"stand")===t}">${RTYPE[t]}</button>`).join("");
-  $("#rPreset").innerHTML=RPRESET.map(([u,w,d])=>
-    `<button class="chip" data-rpre="${u},${w},${d}">${u}U ${w}×${d}</button>`).join("");
+  $("#rPreset").innerHTML=rPresets().map((p,i)=>{
+    const on=num(r.u,42)===p[1]&&num(r.w,600)===p[2]&&num(r.d,900)===p[3];
+    return `<button class="chip" data-rpre="${i}" aria-pressed="${on}">${esc(p[0])}</button>`;
+  }).join("")+`<button class="chip add" id="rPreAdd">+ 규격 등록</button>`;
   $("#rLib").innerHTML=rLib().map(x=>
     `<button class="chip libchip" data-rlib="${x.t}"><i style="background:${x.c}"></i>${esc(x.n)} <b style="font-family:var(--mono);font-weight:500">${x.u}U</b></button>`).join("");
   /* 실장 목록 — 위가 높은 U */
@@ -3569,6 +3727,19 @@ function rRender(){
   $("#rCalcNote").textContent=`장비 ${c.n}대 합계`;
   $("#rScale").textContent=`${num(r.u,42)}U · ${R(num(r.w,600))}×${R(rRackH(r))}×${R(num(r.d,900))}`;
   $("#rPages").textContent=RTABS.find(t=>t[0]===rView)[1];
+  $("#rzWide").hidden=rView!=="work";
+  const sel=(r.items||[]).find(x=>x.id===rSel);
+  const sb=$("#rSelBar");
+  if(sel&&rView==="work"){
+    sb.hidden=false;
+    sb.className="urow"; sb.style.margin="0 0 8px";
+    sb.innerHTML=`<span class="sw" style="background:${sel.c||"#6b7280"}"></span>`
+      +`<span class="at">${num(sel.at,1)}~${num(sel.at,1)+num(sel.u,1)-1}U</span>`
+      +`<span class="nm">${esc(sel.n)}</span>`
+      +`<button data-rmove="${sel.id}" data-d="1">▲</button>`
+      +`<button data-rmove="${sel.id}" data-d="-1">▼</button>`
+      +`<button data-rdel="${sel.id}" style="color:var(--danger)">✕</button>`;
+  }else sb.hidden=true;
   $("#rHint").innerHTML=rView==="fr"
     ? `장비를 <b>위아래로 끌어</b> U 위치를 옮깁니다`
     : rView==="sp" ? `측면도는 앞면이 왼쪽, 평면도는 앞면이 위쪽입니다`
@@ -3577,7 +3748,7 @@ function rRender(){
 
 /* ══════════ 조작 ══════════ */
 function rAddItem(t){
-  const sp=rLib().find(x=>x.t===t); if(!sp)return;
+  const sp=rSpec(t); if(!sp)return;
   const r=rk();
   const at=rFreeSpot(r,num(sp.u,1));
   if(!at){toast("빈 자리가 없습니다 — 랙 높이를 올리거나 장비를 지우세요",true);return;}
@@ -3597,24 +3768,85 @@ function rMove(id,d){
 function rReset(){
   if(!confirm("랙 실장을 처음 상태로 되돌릴까요? 올린 장비가 모두 지워집니다."))return;
   rPush();
-  RS.racks=[newRack()]; RS.cur=0; rSel=null; rView="fr";
-  rVB={x:0,y:0,w:SHEET.w,h:SHEET.h};
+  RS.racks=[newRack()]; RS.cur=0; rSel=null; rView="work";
+  rVB=Object.assign({},rBase());
   rSave(); rRender(); toast("처음 상태로 되돌렸습니다");
 }
-function rOpenLib(){
-  $("#nlName").value=""; $("#nlU").value="1"; $("#nlPw").value="0";
-  $("#nlWt").value="0"; $("#nlPt").value="0";
-  $("#nlCo").innerHTML=RCOLORS.map((c,i)=>`<option value="${c}"${i?"":" selected"}>${["주황","파랑","초록","회색","갈색","적갈","남색","연회색"][i]}</option>`).join("");
+let rEditT=null;                                   /* 수정 중인 장비 종류 */
+function rOpenLib(t){
+  const sp=t?rLibAll().find(x=>x.t===t):null;
+  rEditT=sp?t:null;
+  $("#nlTitle").textContent=sp?"장비 수정":"장비 직접 등록";
+  $("#nlSave").textContent=sp?"수정 저장":"등록하고 올리기";
+  $("#nlName").value=sp?sp.n:""; $("#nlU").value=sp?num(sp.u,1):"1";
+  $("#nlPw").value=sp?num(sp.pw,0):"0"; $("#nlWt").value=sp?num(sp.wt,0):"0";
+  $("#nlPt").value=sp?num(sp.pt,0):"0";
+  const cs=RCOLORS.includes(sp&&sp.c)?sp.c:(sp?sp.c:RCOLORS[0]);
+  $("#nlCo").innerHTML=RCOLORS.concat(RCOLORS.includes(cs)?[]:[cs]).map(c=>
+    `<option value="${c}"${c===cs?" selected":""}>${
+      {"#e2600d":"주황","#2b6cb0":"파랑","#3f7f5f":"초록","#6b7280":"회색","#8a6d3b":"갈색",
+       "#7a3b3b":"적갈","#334155":"남색","#c2ccd6":"연회색"}[c]||c}</option>`).join("");
+  $("#rmanm").hidden=true;
   $("#rlibm").hidden=false;
   setTimeout(()=>$("#nlName").focus(),60);
+}
+/* 장비 목록 관리 */
+function rDrawMan(){
+  const all=rLibAll();
+  $("#rManList").innerHTML=all.map(x=>{
+    const mine=rIsMine(x.t);
+    return `<div class="urow"${x.hide?' style="opacity:.45"':''}>`
+      +`<span class="sw" style="background:${x.c}"></span>`
+      +`<span class="nm">${esc(x.n)}</span>`
+      +`<span class="at" style="width:auto">${x.u}U · ${num(x.pw,0)}W · ${num(x.pt,0)}P</span>`
+      +`<button data-rmanedit="${x.t}">수정</button>`
+      +`<button data-rmanhide="${x.t}">${x.hide?"보임":"숨김"}</button>`
+      +(mine?`<button data-rmandel="${x.t}" style="color:var(--danger)">✕</button>`:"")
+      +`</div>`;
+  }).join("");
+}
+function rOpenMan(){rDrawMan();$("#rmanm").hidden=false;}
+/* 규격 등록 */
+function rDrawPre(){
+  const my=RS.presets||[];
+  $("#rPreList").innerHTML=my.length?my.map((p,i)=>
+    `<div class="urow"><span class="nm">${esc(p[0])}</span>`
+    +`<span class="at" style="width:auto">${p[1]}U ${p[2]}×${p[3]}</span>`
+    +`<button data-rpredel="${i}" style="color:var(--danger)">✕</button></div>`).join("")
+    :`<p class="note" style="font-size:12px;color:var(--ink-3);margin:0">등록한 규격이 아직 없습니다.</p>`;
+}
+function rOpenPre(){
+  const r=rk();
+  $("#npName").value=""; $("#npU").value=num(r.u,42); $("#npW").value=num(r.w,600);
+  $("#npD").value=num(r.d,900); $("#npT").value=r.type||"stand";
+  rDrawPre(); $("#rprem").hidden=false;
+  setTimeout(()=>$("#npName").focus(),60);
+}
+function rSavePre(){
+  const u=Math.max(1,num($("#npU").value,42)),w=Math.max(1,num($("#npW").value,600)),
+        d=Math.max(1,num($("#npD").value,900)),ty=$("#npT").value||"stand";
+  const nm=$("#npName").value.trim()||`${u}U ${w}×${d}`;
+  RS.presets=(RS.presets||[]).concat([[nm,u,w,d,ty]]);
+  const r=rk(); rPush(); r.u=u;r.w=w;r.d=d;r.type=ty;
+  (r.items||[]).forEach(it=>{if(num(it.at,1)+num(it.u,1)-1>u)it.at=Math.max(1,u-num(it.u,1)+1);});
+  $("#rprem").hidden=true;
+  rVB=Object.assign({},rBase());
+  rSave(); rRender(); toast(`${nm} 규격을 등록했습니다`);
 }
 function rSaveLib(){
   const n=$("#nlName").value.trim();
   if(!n){toast("장비 이름을 넣어 주세요",true);$("#nlName").focus();return;}
-  const t="my"+uid().slice(0,6);
-  const sp={t,n,u:Math.max(1,num($("#nlU").value,1)),pw:num($("#nlPw").value,0),
+  const v={n,u:Math.max(1,num($("#nlU").value,1)),pw:num($("#nlPw").value,0),
     wt:num($("#nlWt").value,0),pt:num($("#nlPt").value,0),c:$("#nlCo").value||"#6b7280"};
-  RS.lib=(RS.lib||[]).concat([sp]);
+  if(rEditT){                                      /* 수정 — 기본 12종도 덮어쓸 수 있다 */
+    const mine=(RS.lib||[]).find(x=>x.t===rEditT);
+    if(mine)Object.assign(mine,v);
+    else{RS.over=RS.over||{};RS.over[rEditT]=Object.assign({},RS.over[rEditT],v);}
+    rEditT=null; $("#rlibm").hidden=true;
+    rSave(); rRender(); rOpenMan(); toast(`${n} 을(를) 고쳤습니다`); return;
+  }
+  const t="my"+uid().slice(0,6);
+  RS.lib=(RS.lib||[]).concat([Object.assign({t},v)]);
   $("#rlibm").hidden=true;
   rSave(); rAddItem(t);
 }
@@ -3626,7 +3858,8 @@ function rOutHint(){
   const l=[];
   if(rOutFmt==="png")l.push(rOutScope==="all"
     ? "실장도 · 측면·평면도 · 내역서 3장을 이미지로 만들어 한 번에 보냅니다."
-    : "지금 보는 시트 1장이 이미지로 만들어집니다. 카톡에 바로 붙습니다.");
+    : (rView==="work"?"랙 보기는 화면용이라 A4 실장도 1장으로 만듭니다."
+                     :"지금 보는 시트 1장이 이미지로 만들어집니다. 카톡에 바로 붙습니다."));
   else l.push(rOutScope==="all"
     ? `실장도 · 측면·평면도 · 내역서를 ${RS.paper||"A4"} 3쪽 PDF로 묶습니다.`
     : `지금 보는 시트 1장을 ${RS.paper||"A4"} PDF로 만듭니다.`);
@@ -3634,14 +3867,16 @@ function rOutHint(){
     :"이 환경에서는 공유창이 열리지 않을 수 있습니다. ‘기기에 저장’ 후 카톡에서 첨부하세요.");
   $("#rOutHint").innerHTML=l.map(esc).join("<br>");
 }
+/* 랙 보기는 화면용이라 종이에 얹을 수 없다 — 내보낼 때는 A4 실장도로 */
+function rOutView(){return rView==="work"?"fr":rView;}
 function rFileBase(){
-  const r=rk(),tag=RTABS.find(t=>t[0]===rView)[1];
+  const r=rk(),v=rOutView(),tag=RTABS.find(t=>t[0]===v)[1].replace(" (A4)","");
   return [RS.site,r.name,tag].filter(Boolean).join("_").replace(/[\\/:*?"<>|]/g,"")||"랙실장도";
 }
 function rPages(){
-  const r=rk();
+  const r=rk(), v=rOutView();
   return rOutScope==="all"?[rDrawSVG(r,"fr",2000),rDrawSVG(r,"sp",2000),rBomSVG(r,2000)]
-                          :[rCurSVG(2000)];
+    :[v==="bom"?rBomSVG(r,2000):rDrawSVG(r,v,2000)];
 }
 async function rBuildOut(){
   const P=paper();
@@ -3709,7 +3944,7 @@ document.addEventListener("click",ev=>{
   if(t.dataset&&t.dataset.rclose){$("#"+t.dataset.rclose).hidden=true;return;}
   if(!rackOn)return;                                 /* 랙 화면일 때만 */
   const d=t.dataset||{};
-  if(d.rv){rView=d.rv;rVB={x:0,y:0,w:SHEET.w,h:SHEET.h};rRender();return;}
+  if(d.rv){rView=d.rv;rVB=Object.assign({},rBase());rRender();return;}
   if(d.rcab){RS.cur=+d.rcab;rSel=null;rSave();rRender();return;}
   if(t.id==="rAddRack"){rPush();const n=newRack("랙 "+(RS.racks.length+1));
     const r=rk();n.u=r.u;n.w=r.w;n.d=r.d;n.type=r.type;RS.racks.push(n);RS.cur=RS.racks.length-1;
@@ -3719,10 +3954,34 @@ document.addEventListener("click",ev=>{
     if(!confirm(`${rk().name} 을(를) 삭제할까요?`))return;
     rPush();RS.racks.splice(RS.cur,1);RS.cur=Math.max(0,RS.cur-1);rSave();rRender();return;}
   if(d.rtype){rPush();rk().type=d.rtype;rSave();rRender();return;}
-  if(d.rpre){const[u,w,dd]=d.rpre.split(",").map(Number);rPush();
-    const r=rk();r.u=u;r.w=w;r.d=dd;
-    (r.items||[]).forEach(it=>{if(num(it.at,1)+num(it.u,1)-1>u)it.at=Math.max(1,u-num(it.u,1)+1);});
-    rSave();rRender();return;}
+  if(d.rpre){const p=rPresets()[+d.rpre]; if(!p)return;
+    rPush();
+    const r=rk();r.u=p[1];r.w=p[2];r.d=p[3];if(p[4])r.type=p[4];
+    (r.items||[]).forEach(it=>{if(num(it.at,1)+num(it.u,1)-1>r.u)it.at=Math.max(1,r.u-num(it.u,1)+1);});
+    rVB=Object.assign({},rBase());
+    rSave();rRender();toast(`${p[0]} 규격을 적용했습니다`);return;}
+  if(t.id==="rPreAdd"){rOpenPre();return;}
+  if(t.id==="npSave"){rSavePre();return;}
+  if(d.rpredel!=null){
+    const i=+d.rpredel;
+    if(!confirm(`${(RS.presets||[])[i][0]} 규격을 목록에서 지울까요?`))return;
+    RS.presets.splice(i,1);rSave();rDrawPre();rRender();return;}
+  if(t.id==="rLibMan"){rOpenMan();return;}
+  if(t.id==="rManAdd"){$("#rmanm").hidden=true;rOpenLib();return;}
+  if(t.id==="rManReset"){
+    if(!confirm("장비 목록을 기본 12종으로 되돌릴까요? 직접 등록한 장비도 지워집니다."))return;
+    RS.over={};RS.lib=[];rSave();rDrawMan();rRender();toast("기본 목록으로 되돌렸습니다");return;}
+  if(d.rmanedit){rOpenLib(d.rmanedit);return;}
+  if(d.rmanhide){
+    const tt=d.rmanhide;RS.over=RS.over||{};
+    RS.over[tt]=Object.assign({},RS.over[tt],{hide:!(RS.over[tt]&&RS.over[tt].hide)});
+    rSave();rDrawMan();rRender();return;}
+  if(d.rmandel){
+    const tt=d.rmandel;
+    if(!confirm("이 장비를 목록에서 지울까요? 이미 올려 둔 것은 그대로 남습니다."))return;
+    RS.lib=(RS.lib||[]).filter(x=>x.t!==tt);
+    if(RS.over)delete RS.over[tt];
+    rSave();rDrawMan();rRender();return;}
   if(d.rlib){rAddItem(d.rlib);return;}
   if(t.id==="rLibAdd"){rOpenLib();return;}
   if(t.id==="nlSave"){rSaveLib();return;}
@@ -3736,7 +3995,8 @@ document.addEventListener("click",ev=>{
   if(d.rrow){rSel=d.rrow;rDrawOnly();return;}
   if(t.id==="rzIn"){rZoomCenter(rZoomNow()*1.35);return;}
   if(t.id==="rzOut"){rZoomCenter(rZoomNow()/1.35);return;}
-  if(t.id==="rzFit"){rVB={x:0,y:0,w:SHEET.w,h:SHEET.h};rApplyZoom();return;}
+  if(t.id==="rzFit"){rVB=Object.assign({},rBase());rApplyZoom();return;}
+  if(t.id==="rzWide"){rFitWidth();return;}
   if(t.id==="rBtnUndo"){rUndo();return;}
   if(t.id==="rBtnReset"){rReset();return;}
   if(t.id==="rBtnFs"||t.id==="rBtnZoom"){
