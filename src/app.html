@@ -424,9 +424,18 @@ body.in-app #home,body.in-app #rack,body.in-app #talk{display:none!important}
   </section>
 
   <section id="tMailBox" hidden>
-    <div class="shd"><h2>메일 쓰기</h2><span class="note" id="tMailNote"></span></div>
+    <div class="shd"><h2>제목 찾기</h2><span class="note">상황을 고르면 제목과 본문이 따라옵니다</span></div>
+    <div class="tsearch">
+      <input id="tSQ" placeholder="견적 · 지연 · 독촉 · 인사 · 입금 …" autocomplete="off">
+      <button class="btn gho" id="tSClear">지움</button>
+    </div>
+    <div class="tgrp" id="tSGrps"></div>
+    <div id="tSubjs" style="margin-top:12px"></div>
+
+    <div class="shd" style="margin:18px 0 9px"><h2>메일 쓰기</h2>
+      <span class="note" id="tMailNote"></span></div>
     <div class="f" style="margin-bottom:9px"><label for="tMSubj">제목</label>
-      <input id="tMSubj" placeholder="[광전기통신] OO빌딩 단자함 견적서 송부"></div>
+      <input id="tMSubj" placeholder="위에서 제목을 고르거나 직접 쓰세요"></div>
     <textarea id="tMBody" placeholder="메일 본문을 쓰거나, 아래 메일 틀을 누르세요."></textarea>
     <div class="row">
       <button class="btn pri" id="tMCheck" style="flex:1">메일 점검</button>
@@ -438,13 +447,13 @@ body.in-app #home,body.in-app #rack,body.in-app #talk{display:none!important}
       <button class="btn gho" data-task="subj">제목 추천</button>
     </div>
     <div id="tMFixes" style="margin-top:12px"></div>
-    <div class="shd" style="margin:16px 0 8px"><h2>메일 틀</h2>
-      <span class="note">문구 틀 탭의 이름·현장이 채워집니다</span></div>
-    <div id="tMTpls"></div>
+    <div class="shd" style="margin:18px 0 8px"><h2>제목에 쓰는 말</h2>
+      <span class="note">비슷해 보여도 쓰임이 다릅니다</span></div>
+    <div id="tSWords"></div>
     <div class="shd" style="margin:16px 0 8px"><h2>서명</h2>
       <span class="note">메일 끝에 붙습니다</span></div>
     <textarea id="tMSig" style="min-height:80px"
-      placeholder="광전기통신 정효진&#10;010-0000-0000&#10;회사 주소"></textarea>
+      placeholder="회사명 · 내 이름&#10;010-0000-0000&#10;회사 주소"></textarea>
     <div class="row"><button class="btn gho" id="tMSigAdd" style="flex:1">본문 끝에 서명 붙이기</button></div>
   </section>
 
@@ -475,7 +484,8 @@ body.in-app #home,body.in-app #rack,body.in-app #talk{display:none!important}
       <div class="f"><label for="tvName">상대 이름</label><input id="tvName" placeholder="김과장"></div>
       <div class="f"><label for="tvItem">품목</label><input id="tvItem" placeholder="단자함"></div>
       <div class="f"><label for="tvDate">날짜</label><input id="tvDate" placeholder="9월 30일"></div>
-      <div class="f"><label for="tvMe">내 이름·회사</label><input id="tvMe" placeholder="광전기통신 정효진"></div>
+      <div class="f"><label for="tvCo">회사명</label><input id="tvCo" placeholder="○○통신"></div>
+      <div class="f"><label for="tvMe">내 이름·회사</label><input id="tvMe" placeholder="회사명과 내 이름"></div>
     </div>
     <div id="tTpls"></div>
   </section>
@@ -4228,7 +4238,7 @@ const TFN={3:"격식",2:"기본",1:"친근"};
 /* [말, 격식 1~3, 매체, 언제 쓰나, 쓰면 안 되는 자리, 예문] */
 const TDIC=[
 {g:"인사",k:"인사 안녕 안부 처음 반갑 명절 새해 추석 연말 인사말",i:[
- ["안녕하십니까",3,"메일·공문","공문·첫 메일·윗사람","카톡에서는 딱딱합니다","안녕하십니까, 광전기통신 정효진입니다."],
+ ["안녕하십니까",3,"메일·공문","공문·첫 메일·윗사람","카톡에서는 딱딱합니다","안녕하십니까, ○○통신 ○○○입니다."],
  ["안녕하세요",2,"모두","카톡·문자·전화 전부 무난","",""],
  ["수고 많으십니다",2,"문자·카톡","이미 아는 거래처에 용건을 꺼낼 때","처음 연락하는 상대에게는 어색합니다","수고 많으십니다. 견적 건으로 연락드립니다."],
  ["고생 많으십니다",1,"문자·카톡","친한 현장 담당자","윗사람·발주처 임원",""],
@@ -4239,8 +4249,8 @@ const TDIC=[
  ["환절기 건강 유의하십시오",2,"문자·카톡","계절 인사로 용건 앞에 한 줄","",""],
  ["연말 마무리 잘하시기 바랍니다",2,"모두","12월 인사","",""]]},
 {g:"소개",k:"소개 담당 인수인계 명함 회사 저희 처음",i:[
- ["처음 인사드립니다",2,"모두","첫 연락","","처음 인사드립니다. 광전기통신 정효진입니다."],
- ["광전기통신 정효진입니다",2,"모두","이름을 밝히는 기본형","",""],
+ ["처음 인사드립니다",2,"모두","첫 연락","","처음 인사드립니다. ○○통신 ○○○입니다."],
+ ["○○통신 ○○○입니다",2,"모두","회사명 · 이름 순서가 기본입니다","",""],
  ["~ 업무를 맡고 있습니다",2,"모두","담당 범위를 밝힐 때","","함체 제작·납품 업무를 맡고 있습니다."],
  ["이번에 담당하게 되었습니다",2,"모두","담당자가 바뀌었을 때","","이번에 OO빌딩 건을 담당하게 되었습니다."],
  ["전임자에게 인수인계 받았습니다",2,"모두","앞사람 일을 이어받을 때","",""],
@@ -4603,59 +4613,142 @@ const TASK={
  +"받는 사람이 메일함에서 한눈에 알아볼 수 있게, 회사명과 현장명을 앞에 두고 30자 안쪽으로 주세요."]};
 /* 메일 틀 — [상황, 제목, 본문] */
 const TMAIL=[
- ["견적 송부","[광전기통신] {현장} {품목} 견적서 송부",
+ ["견적 송부","{회사} {현장} {품목} 견적서 송부",
   "{이름}님 안녕하십니까.\n{나}입니다.\n\n요청하신 {현장} {품목} 견적서를 첨부하여 보내 드립니다.\n"
  +"규격과 수량은 주신 도면 기준으로 산출하였으며, 변경이 필요하시면 말씀해 주십시오.\n\n"
  +"검토 후 편하실 때 회신 주시면 감사하겠습니다.\n\n감사합니다."],
- ["발주 확인","[광전기통신] {현장} 발주 확인 및 일정 안내",
+ ["발주 확인","{회사} {현장} 발주 확인 및 일정 안내",
   "{이름}님 안녕하십니까.\n\n{현장} {품목} 발주서 잘 받았습니다.\n"
  +"확인한 내용은 아래와 같습니다.\n\n - 품목 : {품목}\n - 수량 : \n - 납기 : {날짜}\n\n"
  +"위 내용이 맞는지 한 번만 확인 부탁드립니다.\n회신 주시는 대로 제작에 들어가겠습니다.\n\n감사합니다."],
- ["자료 요청","[광전기통신] {현장} 도면(현장 치수) 요청",
+ ["자료 요청","{회사} {현장} 도면(현장 치수) 요청",
   "{이름}님 안녕하십니까.\n\n{현장} {품목} 제작을 위해 도면 또는 현장 실측 치수가 필요합니다.\n"
  +"번거로우시겠지만 한 부 보내 주시면 바로 검토해 회신 드리겠습니다.\n\n"
  +"자료 주시면 {날짜}까지 견적과 일정 안내드리겠습니다.\n\n감사합니다."],
- ["납기 안내","[광전기통신] {현장} {품목} 납기 안내",
+ ["납기 안내","{회사} {현장} {품목} 납기 안내",
   "{이름}님 안녕하십니까.\n\n{현장} {품목} 제작이 마무리되어 일정 안내드립니다.\n\n"
  +" - 출고 예정 : {날짜}\n - 도착 예정 : \n - 수량 : \n\n"
  +"현장 상황에 따라 조정이 필요하시면 말씀해 주십시오.\n\n감사합니다."],
- ["납기 지연 사과","[광전기통신] {현장} 납기 조정 안내 및 사과 말씀",
+ ["납기 지연 사과","{회사} {현장} 납기 조정 안내 및 사과 말씀",
   "{이름}님 안녕하십니까.\n\n먼저 불편을 끼쳐 드려 죄송합니다.\n"
  +"{현장} {품목} 납기가 {날짜}로 늦어지게 되었습니다.\n\n"
  +"사유는 아래와 같습니다.\n - \n\n"
  +"원인은 확인하였으며, 이후 일정에는 차질이 없도록 하겠습니다.\n"
  +"너른 양해 부탁드립니다.\n\n감사합니다."],
- ["방문 일정 요청","[광전기통신] {현장} 방문 일정 문의",
+ ["방문 일정 요청","{회사} {현장} 방문 일정 문의",
   "{이름}님 안녕하십니까.\n\n{현장} 건으로 한 번 찾아뵙고 말씀 나누고 싶습니다.\n"
  +"{날짜} 오후 시간이 괜찮으신지요.\n\n"
  +"어려우시면 편하신 시간 두어 개만 알려 주시면 맞추겠습니다.\n\n감사합니다."],
- ["하자 조치 안내","[광전기통신] {현장} 조치 결과 안내",
+ ["하자 조치 안내","{회사} {현장} 조치 결과 안내",
   "{이름}님 안녕하십니까.\n\n말씀 주신 {품목} 건, 확인 후 조치 내용 안내드립니다.\n\n"
  +" - 확인 내용 : \n - 원인 : \n - 조치 : \n - 완료 예정 : {날짜}\n\n"
  +"불편을 끼쳐 드려 다시 한번 죄송합니다.\n같은 일이 없도록 하겠습니다.\n\n감사합니다."],
- ["세금계산서·입금 요청","[광전기통신] {현장} 세금계산서 발행 및 결제 일정 문의",
+ ["세금계산서·입금 요청","{회사} {현장} 세금계산서 발행 및 결제 일정 문의",
   "{이름}님 안녕하십니까.\n\n{현장} 건 세금계산서를 발행하였습니다.\n\n"
  +" - 발행일 : \n - 금액 : \n\n"
  +"결제 일정 한 번 확인 부탁드립니다.\n확인 후 회신 주시면 감사하겠습니다.\n\n감사합니다."],
- ["담당자 인사","[광전기통신] 담당자 인사드립니다",
+ ["담당자 인사","{회사} 담당자 인사드립니다",
   "{이름}님 안녕하십니까.\n\n{나}입니다.\n"
  +"이번에 {현장} 건을 담당하게 되어 인사드립니다.\n\n"
  +"함체 제작·납품 업무를 맡고 있습니다.\n필요하신 일 있으시면 언제든 편히 연락 주십시오.\n\n"
  +"앞으로 잘 부탁드립니다.\n\n감사합니다."],
- ["신규 거래 제안","[광전기통신] 함체 제작 관련 인사 및 자료 송부",
+ ["신규 거래 제안","{회사} 함체 제작 관련 인사 및 자료 송부",
   "{이름}님 안녕하십니까.\n\n{나}입니다.\n"
  +"전기·통신 함체 제작과 납품을 하고 있어 인사드립니다.\n\n"
  +"회사 소개와 제작 사례를 첨부하여 보내 드립니다.\n"
  +"필요하신 규격이 있으시면 도면 없이 치수만 주셔도 견적 드릴 수 있습니다.\n\n"
  +"한 번 검토해 보시고 편하실 때 연락 주시면 감사하겠습니다.\n\n감사합니다."],
- ["명절 인사","[광전기통신] 명절 인사드립니다",
+ ["명절 인사","{회사} 명절 인사드립니다",
   "{이름}님 안녕하십니까.\n\n한 해 동안 베풀어 주신 배려에 깊이 감사드립니다.\n"
  +"가정에 늘 건강과 평안이 함께하시기를 바랍니다.\n\n"
  +"새해에도 변함없이 성심껏 하겠습니다.\n\n{나} 드림"],
- ["회신 독촉","[광전기통신] {현장} 진행 관련 재문의",
+ ["회신 독촉","{회사} {현장} 진행 관련 재문의",
   "{이름}님 안녕하십니까.\n\n바쁘신 줄 압니다만, 앞서 보내 드린 {현장} 건 진행 상황을 여쭙습니다.\n\n"
  +"금주 내 회신 주시면 {날짜} 일정에 맞출 수 있습니다.\n"
  +"검토에 필요한 자료가 더 있으시면 말씀해 주십시오. 바로 준비하겠습니다.\n\n감사합니다."]];
+
+/* 메일 제목 — [제목, 격식 1~3, 언제 쓰나, 주의]. 본문은 b 번 메일 틀과 이어집니다 */
+const TSUBJ=[
+{g:"견적 보내기",k:"견적 단가 금액 산출 송부 제출 가격",b:0,i:[
+ ["{회사} {현장} {품목} 견적서 송부",3,"가장 무난한 공식 표기. 문서를 보낸다는 뜻이 분명합니다",""],
+ ["{회사} {현장} {품목} 견적 안내",2,"금액을 알려 드린다는 느낌. 협의 여지를 남길 때",""],
+ ["{회사} {현장} {품목} 견적서 제출",3,"입찰·관공서처럼 정식으로 내는 자리","일반 거래에 쓰면 과하게 딱딱합니다"],
+ ["{회사} {현장} 견적 재송부 (단가 조정)",3,"두 번째 견적 — 무엇이 바뀌었는지 제목에 적으세요",""],
+ ["{회사} {현장} 견적 관련 문의",2,"내가 물어볼 것이 있을 때",""]]},
+{g:"발주·계약",k:"발주 오더 계약 수주 접수 서류 날인",b:1,i:[
+ ["{회사} {현장} 발주 확인 및 일정 안내",2,"발주서를 받고 확인해 드릴 때 — 가장 많이 씁니다",""],
+ ["{회사} {현장} 발주서 접수 확인",3,"받았다는 사실만 짧게 알릴 때",""],
+ ["{회사} {현장} 계약 서류 송부",3,"계약서·사업자등록증 등을 보낼 때",""],
+ ["{회사} {현장} 발주 요청드립니다",2,"내가 발주를 부탁하는 쪽일 때","재촉으로 읽히지 않게 본문을 부드럽게"]]},
+{g:"자료 요청",k:"자료 도면 치수 사양 요청 부탁 협조 실측",b:2,i:[
+ ["{회사} {현장} 도면(현장 치수) 요청",2,"무엇이 필요한지 제목에서 바로 보이게",""],
+ ["{회사} {현장} 자료 협조 요청",3,"상대 부서까지 움직여야 할 때",""],
+ ["{회사} {현장} 사양 확인 문의",2,"자료가 아니라 답을 구할 때",""],
+ ["{회사} {현장} 제작 전 확인 요청",2,"되돌릴 수 없는 시점 — 제목에 '제작 전'을 넣으면 우선순위가 올라갑니다",""]]},
+{g:"납기·출고 안내",k:"납기 일정 출고 도착 배송 제작 완료 안내",b:3,i:[
+ ["{회사} {현장} {품목} 납기 안내",2,"날짜를 알려 드릴 때 기본형",""],
+ ["{회사} {현장} {품목} 출고 안내",2,"오늘 나갔다는 사실을 알릴 때",""],
+ ["{회사} {현장} 제작 일정 공유",2,"아직 확정 전, 계획을 알릴 때",""],
+ ["{회사} {현장} 납품 완료 안내",2,"끝났음을 알리고 검수를 청할 때",""]]},
+{g:"지연·사과",k:"지연 늦 사과 죄송 연기 조정 변경 미뤄",b:4,i:[
+ ["{회사} {현장} 납기 조정 안내 및 사과 말씀",3,"이미 약속한 날짜를 못 지킬 때. 제목에 사과를 밝히면 신뢰가 덜 깎입니다",""],
+ ["{회사} {현장} 납기 지연 안내",2,"사실만 담백하게","상대가 손해를 보는 상황에 이것만 쓰면 차갑게 읽힙니다"],
+ ["{회사} {현장} 일정 변경 협조 요청",2,"아직 확정 전이라 상의하는 단계",""],
+ ["{회사} {현장} 진행 지연 관련 말씀드립니다",3,"사유가 복잡해 본문에서 풀어야 할 때",""]]},
+{g:"하자·조치",k:"하자 불량 클레임 문제 조치 보수 AS 교체",b:6,i:[
+ ["{회사} {현장} 조치 결과 안내",2,"확인하고 처리한 뒤 보고할 때",""],
+ ["{회사} {현장} 확인 요청 및 조치 계획",2,"아직 원인을 못 찾았을 때 — 계획만 먼저",""],
+ ["{회사} {현장} 방문 조치 일정 안내",2,"현장에 가야 할 때",""],
+ ["{회사} {현장} 불편 드린 점 사과드립니다",3,"사과가 본론일 때","원인 설명을 앞세우면 변명으로 읽힙니다"]]},
+{g:"회신 독촉",k:"독촉 재촉 회신 답변 재문의 확인 아직 진행",b:11,i:[
+ ["{회사} {현장} 진행 관련 재문의",2,"첫 번째 재촉 — 가장 부드럽습니다",""],
+ ["{회사} {현장} 회신 요청 (재발송)",2,"두 번째 — 앞서 보냈음을 밝힐 때",""],
+ ["Re: (앞서 보낸 메일 제목 그대로)",2,"새 제목보다 답장으로 이어 올리는 편이 자연스럽습니다. 상대가 앞 내용을 바로 봅니다",""],
+ ["{회사} {현장} 일정 확정을 위한 회신 부탁드립니다",3,"기한을 근거로 들 때","'긴급' '!!' 는 넣지 마세요 — 재촉으로 남습니다"]]},
+{g:"수금",k:"수금 입금 결제 계산서 세금계산서 정산 잔금 대금 미수",b:7,i:[
+ ["{회사} {현장} 세금계산서 발행 안내",2,"발행 사실만 알릴 때 — 가장 부담 없습니다",""],
+ ["{회사} {현장} 결제 일정 문의",2,"돈 이야기를 '일정'으로 돌려 꺼냅니다",""],
+ ["{회사} {현장} 잔금 정산 요청",3,"금액이 남았을 때",""],
+ ["{회사} {현장} 대금 지급 관련 문의",3,"기한이 지났을 때","'미수' '연체' 는 제목에 넣지 않는 편이 낫습니다"]]},
+{g:"방문·미팅",k:"방문 미팅 회의 일정 뵙 찾아 약속",b:5,i:[
+ ["{회사} {현장} 방문 일정 문의",2,"날짜를 여쭐 때",""],
+ ["{회사} {현장} 미팅 일정 협의 요청",3,"여러 사람이 모여야 할 때",""],
+ ["{회사} 인사차 방문 문의드립니다",2,"용건 없이 얼굴 뵈러 갈 때",""]]},
+{g:"인사·소개",k:"인사 소개 담당 변경 신규 처음 거래",b:8,i:[
+ ["{회사} 담당자 인사드립니다",2,"첫 메일",""],
+ ["{회사} 담당자 변경 안내",2,"인수인계했을 때",""],
+ ["{회사} 회사 소개 및 자료 송부",2,"신규 거래를 트는 자리",""],
+ ["{회사} {현장} 담당 인사드립니다",2,"현장이 정해진 뒤 인사",""]]},
+{g:"명절·계절 인사",k:"명절 추석 설 연말 새해 인사 감사 송년",b:10,i:[
+ ["{회사} 추석 인사드립니다",2,"한가위",""],
+ ["{회사} 새해 인사 및 감사 말씀",3,"연초",""],
+ ["{회사} 한 해 마무리 인사드립니다",3,"연말",""]]},
+{g:"신규 제안",k:"제안 영업 신규 소개 협력 거래 문의",b:9,i:[
+ ["{회사} 함체 제작 관련 인사 및 자료 송부",2,"처음 연락하는 곳 — '영업' '홍보'는 제목에 넣지 마세요",""],
+ ["{회사} {품목} 납품 관련 문의드립니다",2,"상대에게 묻는 모양으로 문을 여는 방법",""],
+ ["{회사} {현장} 관련 협력 문의",2,"진행 중인 현장을 매개로",""]]}];
+/* 제목에 쓰는 말 — 비슷해 보여도 쓰임이 다르다 */
+const TSWORD=[
+ ["송부","문서·파일을 보낼 때","견적서·계산서처럼 '물건이 아닌 문서'에 씁니다"],
+ ["발송","물건이나 우편을 보낼 때","서류에 쓰면 조금 어색합니다"],
+ ["전달","제3자에게 건네 줄 때","내가 만든 것에는 '송부'가 맞습니다"],
+ ["제출","심사·검토를 받으러 낼 때","입찰·관공서. 일반 거래에 쓰면 과합니다"],
+ ["안내","내 쪽 사정을 알릴 때","가장 무난합니다"],
+ ["통보","일방적으로 결정을 알릴 때","고압적으로 읽힙니다 — 거래처에는 '안내'"],
+ ["공지","여러 곳에 동시에 알릴 때","한 곳에 보내는 메일에는 안 씁니다"],
+ ["알림","가벼운 소식","공문에는 '안내'가 무난합니다"],
+ ["요청","해 달라고 할 때","'협조 요청'은 상대 부서까지 움직일 때"],
+ ["문의","묻는 것일 때","답을 구할 때. 시키는 느낌이 없어 부담이 적습니다"],
+ ["부탁드립니다","제목 끝에 붙여 부드럽게","공문 양식에는 '요청'"],
+ ["요망","공문 안에서만","메일 제목에 쓰면 명령조로 읽힙니다"],
+ ["확인","맞는지 봐 달라고 할 때",""],
+ ["검토","판단해 달라고 할 때","'확인'보다 무겁습니다"],
+ ["회신","답장을 달라고 할 때",""],
+ ["재문의","두 번째로 물을 때","'독촉'이라는 말은 제목에 쓰지 마세요"],
+ ["관련","무엇에 대한 건지 묶을 때","'OO 관련 문의' 처럼"],
+ ["~의 건","공문투","메일 제목에는 잘 안 씁니다"],
+ ["긴급","쓰지 마세요","정말 급해도 제목보다 전화가 빠릅니다"],
+ ["[회사명]","제목 맨 앞","상대 메일함에서 한눈에 찾힙니다. 대괄호를 권합니다"]];
 
 let TS={fav:[],mine:[],draft:"",v:{},read:"",mail:{s:"",b:"",sig:""},ai:0};
 let tView="find", tQ="", tGrp="", tFmt=0;
@@ -4729,7 +4822,8 @@ function tFillTpl(body){
     .replace(/\{이름\}/g,v.name||"담당자")
     .replace(/\{품목\}/g,v.item||"품목")
     .replace(/\{날짜\}/g,v.date||"날짜")
-    .replace(/\{나\}/g,v.me||"저");
+    .replace(/\{나\}/g,v.me||"저")
+    .replace(/\{회사\}/g,v.co?`[${v.co}]`:"[회사명]");
 }
 
 /* ══════════ 그리기 ══════════ */
@@ -4808,7 +4902,7 @@ function tDrawTpl(){
   const v=TS.v||{};
   const set=(id,k)=>{const e=$(id);if(e&&document.activeElement!==e)e.value=v[k]||"";};
   set("#tvSite","site");set("#tvName","name");set("#tvItem","item");
-  set("#tvDate","date");set("#tvMe","me");
+  set("#tvDate","date");set("#tvMe","me");set("#tvCo","co");
   $("#tTpls").innerHTML=TTPL.map(([t,b],i)=>
     `<div class="tcard"><div class="w" style="font-size:15px">${esc(t)}</div>`
     +`<p class="ex" style="white-space:pre-wrap">${esc(tFillTpl(b))}</p>`
@@ -4939,7 +5033,7 @@ function tMailCheck(){
   if(!sub.trim())add("제목이 없습니다","제목 없는 메일은 열리지 않거나 스팸으로 갑니다");
   else{
     if(sub.trim().length>40)add("제목이 깁니다 ("+sub.trim().length+"자)","메일함에서 뒤가 잘립니다. 30자 안쪽을 권합니다");
-    if(!/^\s*\[/.test(sub))add("제목 앞에 회사명이 없습니다","[광전기통신] 처럼 앞에 달면 상대 메일함에서 바로 찾힙니다");
+    if(!/^\s*\[/.test(sub))add("제목 앞에 회사명이 없습니다","[회사명] 처럼 앞에 달면 상대 메일함에서 바로 찾힙니다");
     if(/^(안녕|인사|문의|요청|견적)\s*$/.test(sub.trim()))add("제목이 막연합니다","무엇에 대한 것인지 현장명·품목을 넣으세요");
   }
   if(!body.trim())add("본문이 없습니다","");
@@ -4959,15 +5053,51 @@ function tMailCheck(){
   if(!sig.trim())add("서명이 없습니다","이름·회사·연락처를 넣어 두면 매번 안 쓰셔도 됩니다");
   return out;
 }
+let tSQ="", tSGrp="";
+function tDrawSubj(){
+  $("#tSGrps").innerHTML=[`<button class="chip" data-tsgrp="" aria-pressed="${!tSGrp}">전체 ${TSUBJ.length}상황</button>`]
+    .concat(TSUBJ.map(g=>`<button class="chip" data-tsgrp="${g.g}" aria-pressed="${tSGrp===g.g}">${g.g}</button>`)).join("");
+  const cs=tCands(tSQ);
+  const res=TSUBJ.filter(g=>{
+    if(tSGrp&&g.g!==tSGrp)return false;
+    if(!tSQ)return true;
+    return cs.some(c=>(g.k+" "+g.g).indexOf(c)>=0)
+      ||g.i.some(x=>cs.some(c=>(x[0]+" "+x[2]).indexOf(c)>=0));
+  });
+  if(!res.length){
+    $("#tSubjs").innerHTML=`<div class="tok" style="color:var(--ink-3);border-color:var(--line-2)">`
+      +`‘${esc(tSQ)}’ 에 맞는 상황이 없습니다. 위 상황에서 골라 보세요.</div>`;
+    return;
+  }
+  $("#tSubjs").innerHTML=res.map((g,gi)=>{
+    const bi=TSUBJ.indexOf(g);
+    return `<div class="shd" style="margin:14px 0 7px"><h2 style="cursor:default">${g.g}</h2>`
+    +`<span class="note">제목 ${g.i.length}개</span></div>`
+    +g.i.map((x,xi)=>{
+      const sub=tFillTpl(x[0]);
+      return `<div class="tcard tf${x[1]}">`
+      +`<div class="w" style="font-size:14.5px">${esc(sub)}</div>`
+      +`<div class="tags"><span class="tag fm">${TFN[x[1]]}</span>`
+      +`<span class="tag">${esc(sub.length)}자</span></div>`
+      +(x[2]?`<p class="use">${esc(x[2])}</p>`:"")
+      +(x[3]?`<p class="no">주의 — ${esc(x[3])}</p>`:"")
+      +`<div class="act"><button data-tsput="${bi},${xi}">제목+본문 넣기</button>`
+      +`<button data-tsonly="${bi},${xi}">제목만</button>`
+      +`<button data-tcopy="${esc(sub)}">복사</button></div></div>`;
+    }).join("");
+  }).join("");
+}
 function tDrawMail(){
   const m=TS.mail||{};
   const set=(id,v)=>{const e=$(id);if(e&&document.activeElement!==e)e.value=v||"";};
   set("#tMSubj",m.s); set("#tMBody",m.b); set("#tMSig",m.sig);
   $("#tMailNote").textContent=(m.b||"").length?`본문 ${(m.b||"").length}자`:"";
-  $("#tMTpls").innerHTML=TMAIL.map(([t,sub,body],i)=>
-    `<div class="tcard"><div class="w" style="font-size:15px">${esc(t)}</div>`
-    +`<p class="use" style="font-family:var(--mono);font-size:12px">${esc(tFillTpl(sub))}</p>`
-    +`<div class="act"><button data-tmail="${i}">이 틀로 쓰기</button></div></div>`).join("");
+  tDrawSubj();
+  $("#tSWords").innerHTML=TSWORD.map(w=>
+    `<div class="tcard" style="border-left-color:#8a6d3b;padding:8px 12px">`
+    +`<div class="w" style="font-size:14.5px">${esc(w[0])}</div>`
+    +`<p class="use" style="margin-top:2px">${esc(w[1])}</p>`
+    +(w[2]?`<p class="no" style="color:var(--ink-3)">${esc(w[2])}</p>`:"")+`</div>`).join("");
 }
 function tDrawMailFix(){
   const fs=tMailCheck();
@@ -5088,12 +5218,21 @@ document.addEventListener("click",ev=>{
     if(m.b.indexOf(m.sig.trim())>=0){toast("이미 붙어 있습니다",true);return;}
     $("#tMBody").value=m.b.replace(/\s+$/,"")+"\n\n"+m.sig.trim();
     tMailSave();tDrawMail();toast("서명을 붙였습니다");return;}
-  if(d.tmail!=null){
-    const[,sub,body]=TMAIL[+d.tmail];
-    $("#tMSubj").value=tFillTpl(sub);
-    $("#tMBody").value=tFillTpl(body)+((TS.mail&&TS.mail.sig)?"\n\n"+TS.mail.sig:"");
+  if(d.tsput!=null||d.tsonly!=null){
+    const only=d.tsonly!=null;
+    const[gi,xi]=(only?d.tsonly:d.tsput).split(",").map(Number);
+    const g=TSUBJ[gi], x=g.i[xi];
+    $("#tMSubj").value=tFillTpl(x[0]);
+    if(!only){
+      const body=TMAIL[g.b]?TMAIL[g.b][2]:"";
+      $("#tMBody").value=tFillTpl(body)+((TS.mail&&TS.mail.sig)?"\n\n"+TS.mail.sig:"");
+    }
     tMailSave();tDrawMail();$("#tMFixes").innerHTML="";
-    window.scrollTo(0,0);toast("메일 틀을 넣었습니다 — 빈칸을 채우세요");return;}
+    toast(only?"제목을 넣었습니다":"제목과 본문을 넣었습니다 — 빈칸을 채우세요");
+    const el=$("#tMSubj"); if(el)el.scrollIntoView({block:"center",behavior:"smooth"});
+    return;}
+  if(t.id==="tSClear"){tSQ="";$("#tSQ").value="";tDrawSubj();$("#tSQ").focus();return;}
+  if(d.tsgrp!=null){tSGrp=d.tsgrp;tDrawSubj();return;}
   if(t.id==="tRGo"){TS.read=$("#tRText").value;tSave();tDrawRead();return;}
   if(t.id==="tRWipe"){$("#tRText").value="";TS.read="";tSave();tDrawRead();return;}
   if(t.id==="tHClear"){tHQ="";$("#tHQ").value="";tDrawHan();$("#tHQ").focus();return;}
@@ -5123,7 +5262,9 @@ document.addEventListener("click",ev=>{
       +"[말투 바꾸기] 쓴 문장을 격식 있게·부드럽게·짧게·위트 있게 바꿔 보여 줍니다.\n"
       +"  ‘위트 있게’ 는 끝에 붙일 만한 한 줄도 같이 골라 줍니다.\n\n"
       +"[🎤 말로] 운전 중이면 말로 받아쓰세요. (아이폰 사파리는 키보드의 마이크를 쓰세요)\n\n"
-      +"[메일 쓰기] 제목·본문·서명을 갖춰 씁니다. 메일 틀 12종.\n"
+      +"[메일 쓰기] 상황을 고르면 제목 후보가 나오고, 고른 제목에 맞는 본문이 따라옵니다.\n"
+      +"  제목마다 언제 쓰는지·주의할 점이 붙어 있습니다.\n"
+      +"  ‘제목에 쓰는 말’ 에서 송부·안내·통보·요청의 차이를 볼 수 있습니다.\n"
       +"  ‘메일 점검’ 은 카톡과 다른 기준으로 봅니다 — 제목, 인사말, 문단 나눔, 맺음말, 서명.\n\n"
       +"[🤖 AI에게 물어보기] 물어볼 글을 통째로 복사해 줍니다.\n"
       +"  Claude 앱에 붙여넣기만 하면 되고, 쓰고 계신 구독 안이라 돈이 따로 안 나갑니다.\n\n"
@@ -5137,13 +5278,14 @@ document.addEventListener("input",ev=>{
   const id=ev.target.id, v=ev.target.value;
   if(id==="tQ"){tQ=v;tDrawFind();return;}
   if(id==="tHQ"){tHQ=v;tDrawHan();return;}
+  if(id==="tSQ"){tSQ=v;tDrawSubj();return;}
   if(id==="tRText"){TS.read=v;tSave();return;}
   if(id==="tMSubj"||id==="tMBody"||id==="tMSig"){
     tMailSave();
     $("#tMailNote").textContent=$("#tMBody").value.length?`본문 ${$("#tMBody").value.length}자`:"";
     return;}
   if(id==="tText"){TS.draft=v;tSave();$("#tLen").textContent=v.length?`${v.length}자`:"";return;}
-  const vk={tvSite:"site",tvName:"name",tvItem:"item",tvDate:"date",tvMe:"me"};
+  const vk={tvSite:"site",tvName:"name",tvItem:"item",tvDate:"date",tvMe:"me",tvCo:"co"};
   if(vk[id]){TS.v=TS.v||{};TS.v[vk[id]]=v;tSave();tDrawTpl();return;}
 });
 tLoad();
