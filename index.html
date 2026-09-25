@@ -283,6 +283,9 @@ body.in-app #home,body.in-app #rack,body.in-app #talk{display:none!important}
 .tok{padding:14px;text-align:center;color:var(--ok);font-size:14px;border:1px dashed var(--ok);
   border-radius:var(--r-s);background:var(--panel-2)}
 .tgrp{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.tw{text-decoration:underline dotted;text-underline-offset:3px;text-decoration-color:var(--line-2);
+  cursor:pointer}
+.tw:hover{text-decoration-color:var(--accent);color:var(--accent)}
 /* ── 캐비닛 랙 실장 ── */
 #rack{min-height:100%}
 .rwrap{max-width:900px;margin:0 auto;padding-inline:14px;padding-block:0 118px}
@@ -428,6 +431,7 @@ body.in-app #home,body.in-app #rack,body.in-app #talk{display:none!important}
     <div class="row">
       <button class="btn pri" id="tCheck" style="flex:1">다듬을 곳 찾기</button>
       <button class="btn" id="tMic" title="말로 받아쓰기">🎤 말로</button>
+      <button class="btn gho" data-tsel="tText" title="글에서 낱말을 드래그한 뒤 누르세요">낱말 뜻</button>
       <button class="btn" id="tCopyAll">복사</button>
       <button class="btn gho" id="tWipe">비움</button>
     </div>
@@ -464,6 +468,7 @@ body.in-app #home,body.in-app #rack,body.in-app #talk{display:none!important}
     <textarea id="tMBody" placeholder="메일 본문을 쓰거나, 아래 메일 틀을 누르세요."></textarea>
     <div class="row">
       <button class="btn pri" id="tMCheck" style="flex:1">메일 점검</button>
+      <button class="btn gho" data-tsel="tMBody" title="본문에서 낱말을 드래그한 뒤 누르세요">낱말 뜻</button>
       <button class="btn" id="tMCopy">제목+본문 복사</button>
       <button class="btn gho" id="tMWipe">비움</button>
     </div>
@@ -542,6 +547,14 @@ body.in-app #home,body.in-app #rack,body.in-app #talk{display:none!important}
     <div id="tMineList"></div>
   </section>
  </div>
+</div>
+
+<div class="modal" id="tsynm" hidden>
+  <div class="mbox">
+    <div class="mhd"><h3 style="margin:0;font-size:16px" id="tsynTitle">낱말</h3>
+      <button class="btn gho" data-tclose="tsynm">닫기</button></div>
+    <div id="tsynBody"></div>
+  </div>
 </div>
 
 <div class="modal" id="taskm" hidden>
@@ -5499,11 +5512,11 @@ const TCAT=[
 })();
 /* 글맛 표시 — 글에서 빛나는 말 / 입말에서 자연스러운 말 / 공문 말투 */
 const TTAG={};
-"시나브로|자못|외려|무릇|모름지기|저어하다|사위다|망연하다|반추하다|예컨대|여하튼|이윽고|비로소|기로|바라건대|못내|불현듯|에둘러|오롯이|켜켜이|고스란히|여미다|추스르다|곱씹다|깃들다|스미다|묻어나다|잦아들다|다다르다|그윽하다|고즈넉하다|애틋하다|아련하다|사무치다|절절하다|옹골차다|여무지다|의젓하다|감개무량하다|북받치다|자취|여운|소회|감회|회포|정취|운치|기품|격조|전말|자초지종|분수령|기틀|밑거름|숱한|갖은|저마다|퍽|사뭇|짐짓|일구다|무르익다|자아내다|아우르다|망라하다|삼가|겸허히"
+"시나브로|자못|외려|무릇|모름지기|저어하다|사위다|망연하다|반추하다|예컨대|여하튼|이윽고|비로소|기로|바라건대|못내|불현듯|에둘러|오롯이|켜켜이|고스란히|여미다|추스르다|곱씹다|깃들다|스미다|묻어나다|잦아들다|다다르다|그윽하다|고즈넉하다|애틋하다|아련하다|사무치다|절절하다|옹골차다|여무지다|의젓하다|감개무량하다|북받치다|자취|여운|소회|감회|회포|정취|운치|기품|격조|전말|자초지종|분수령|기틀|밑거름|숱한|갖은|저마다|퍽|사뭇|짐짓|일구다|무르익다|자아내다|아우르다|망라하다|삼가|겸허히|헤아리다|가늠하다|갈무리하다|간수하다|다독이다|보듬다|어루만지다|다잡다|미치다|삼가다|담담하다|의연하다|초연하다|은은하다|잔잔하다|아득하다|까마득하다|막막하다|다부지다|무던하다|듬직하다|뭉클하다|벅차다|결|기미|조짐|겨를|말미|실마리|갈피|가닥|잔상|몸가짐|처신|품위|본의|속내|취지|실정|몫|본분|도리|고비|갈림길|바탕|토대|내력|경위|여느|두루|고루|널리|부디|모쪼록|정중히|마침내|하물며|더욱이|나아가|가령|이를테면|온전히|한껏|무르익다|여물다|저물다|기울다|서슴다|감수하다|무릅쓰다|주저하다|망설이다|이르다|닿다|빚다|아끼다|사양하다|침착하다"
  .split("|").forEach(w=>TTAG[w]="글");
-"되레|대놓고|어차피|얼추|게다가|어쨌든|낌새|짬|살갑다|황당하다|신경 쓰이다|고생이 많다|꼭|정말|진짜|아마|가끔|자주|바쁘다|괜찮다|좋아하다|내키지 않다|허술하다|대충|까다롭다|깐깐하다"
+"되레|대놓고|어차피|얼추|게다가|어쨌든|낌새|짬|살갑다|황당하다|신경 쓰이다|고생이 많다|꼭|정말|진짜|아마|가끔|자주|바쁘다|괜찮다|좋아하다|내키지 않다|허술하다|대충|까다롭다|깐깐하다|다행이다|마음에 들다|부담스럽다|꺼리다|들르다|정신없다|어이없다|뭉클하다|야무지다|열심히|솔직히|반갑다|뿌듯하다|섭섭하다|언짢다|막막하다|훑어보다|아무래도|건성|엉성"
  .split("|").forEach(w=>TTAG[w]="말");
-"요망|필히|용이하다|이에|귀하|당사|폐사|통지|통보|공지|제출|송부|수령|인지|숙지|귀책|이행|준용|상기|하기|금일|명일|익일|작일|향후|사의|진력|하회|상회|부득이|소정의"
+"요망|필히|용이하다|이에|귀하|당사|폐사|통지|통보|공지|제출|송부|수령|인지|숙지|귀책|이행|준용|상기|하기|금일|명일|익일|작일|향후|사의|진력|하회|상회|부득이|소정의|의뢰|심사|검수|접수|인수|납품|발주|수주|시정|소관|방침|전량|물량|기성|준공|착공|정산|청구|유예|하자|결함|협조|당부|공조|상호|동반|사전에|우려|염려|명석하다|총명하다|진중하다"
  .split("|").forEach(w=>TTAG[w]="공문");
 const TTAGC={"글":"#2b6cb0","말":"#3f7f5f","공문":"#8a6d3b"};
 
@@ -5628,7 +5641,7 @@ function tDrawFind(){
       +`<div class="tags"><span class="tag fm">${TFN[it[1]]}</span><span class="tag">${esc(it[2])}</span></div>`
       +(it[3]?`<p class="use">${esc(it[3])}</p>`:"")
       +(it[4]?`<p class="no">쓰지 마세요 — ${esc(it[4])}</p>`:"")
-      +(it[5]?`<p class="ex">${esc(it[5])}</p>`:"")
+      +(it[5]?`<p class="ex">${tLink(esc(it[5]))}</p>`:"")
       +`<div class="act"><button data-tcopy="${esc(it[5]||it[0])}">복사</button>`
       +`<button data-tfav="${esc(it[0])}" class="${fav?"on":""}">${fav?"★ 즐겨찾기":"☆ 즐겨찾기"}</button>`
       +`<button data-tput="${esc(it[5]||it[0])}">문장에 넣기</button></div></div>`;
@@ -5642,7 +5655,8 @@ function tDrawFix(keep){
   if(!t.trim()){$("#tFixes").innerHTML="";return;}
   const fs=tCheck(t);
   if(!fs.length){
-    $("#tFixes").innerHTML=`<div class="tok">다듬을 곳을 찾지 못했습니다. 이대로 보내셔도 좋습니다.</div>`;
+    $("#tFixes").innerHTML=`<div class="tok">맞춤법·띄어쓰기는 다듬을 곳이 없습니다.</div>`
+      +tDrawWordAdvice(t);
     return;
   }
   $("#tFixes").innerHTML=`<div class="shd" style="margin:0 0 8px"><h2 style="cursor:default">다듬을 곳 ${fs.length}</h2>`
@@ -5655,7 +5669,21 @@ function tDrawFix(keep){
       +`<div class="l2">${esc(f.why)}</div>`
       +(f.to?`<button data-tfixat="${f.at}" data-tfixi="${i}">이렇게 고치기</button>`:"")
       +`</div>`;
-    }).join("");
+    }).join("")
+    +tDrawWordAdvice(t);
+}
+function tDrawWordAdvice(t){
+  const ws=tWordAdvice(t);
+  if(!ws.length)return "";
+  return `<div class="shd" style="margin:16px 0 8px"><h2 style="cursor:default">낱말 바꿔 보기 ${ws.length}</h2>`
+    +`<span class="note">쓰임이 갈리는 말입니다</span></div>`
+    +ws.map(w=>`<div class="tfix word">`
+    +`<div class="l1"><b style="color:var(--ink)">${esc(w.w)}</b> `
+    +`<span style="font-size:11.5px;color:var(--ink-3)">${esc(w.g)}</span></div>`
+    +`<div class="l2">${esc(w.why)}</div>`
+    +`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">`
+    +w.alts.map(a=>`<button data-twrep="${esc(w.w)}|${esc(a)}">${esc(a)} 로</button>`).join("")
+    +`<button data-tword="${esc(w.w)}">뜻 보기</button></div></div>`).join("");
 }
 function tDrawTpl(){
   const v=TS.v||{};
@@ -5759,7 +5787,7 @@ function tDrawRead(){
     `<div class="tcard" style="border-left-color:#2b6cb0">`
     +`<div class="w">${esc(r[1])}</div>`
     +`<p class="use">${esc(r[2])}</p>`
-    +`<p class="ex">${esc(r[3])}</p>`
+    +`<p class="ex">${tLink(esc(r[3]))}</p>`
     +`<div class="act"><button data-tcopy="${esc(r[3])}">답변 복사</button>`
     +`<button data-tput="${esc(r[3])}">문장에 넣기</button></div></div>`).join("");
 }
@@ -5844,6 +5872,62 @@ function tDrawSyn(){
     `<div class="shd" style="margin:14px 0 7px"><h2 style="cursor:default">${g.g}</h2>`
     +`<span class="note">${esc(g.c)} · ${g.i.length}개</span></div>`
     +g.i.map(tSynCard).join("")).join("");
+}
+/* 글 속 낱말에 점선 밑줄 — 누르면 뜻과 비슷한 말이 뜬다 */
+let TLINKRE=null;
+function tLinkRe(){
+  if(TLINKRE)return TLINKRE;
+  const ws=[...new Set(tAllWords().map(o=>o.x[0]))]
+    .filter(w=>w.length>=2)
+    .sort((a,b)=>b.length-a.length)
+    .map(w=>w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"));
+  TLINKRE=new RegExp("("+ws.join("|")+")","g");
+  return TLINKRE;
+}
+function tLink(t){                                 /* 이미 esc 된 글자열에만 쓴다 */
+  if(!t)return t;
+  return t.replace(tLinkRe(),m=>`<u class="tw" data-tword="${m}">${m}</u>`);
+}
+function tSynPop(w){
+  w=(w||"").trim();
+  if(!w)return;
+  const hits=[];
+  TSYN.forEach(g=>g.i.forEach(x=>{if(x[0]===w)hits.push({g,x});}));
+  if(!hits.length){                                /* 딱 맞는 게 없으면 품은 낱말로 */
+    TSYN.forEach(g=>g.i.forEach(x=>{if(w.indexOf(x[0])>=0&&x[0].length>=2)hits.push({g,x});}));
+  }
+  if(!hits.length){toast(`‘${w}’ 는 사전에 없습니다`,true);return;}
+  $("#tsynTitle").textContent=w;
+  $("#tsynBody").innerHTML=hits.map(({g,x})=>
+    `<div class="shd" style="margin:0 0 7px"><h2 style="cursor:default">${esc(g.g)}</h2>`
+    +`<span class="note">${esc(g.c)}</span></div>`
+    +tSynCard(x)
+    +`<div class="row" style="margin:0 0 12px">`
+    +`<button class="btn gho" data-tsyngo="${esc(g.g)}" style="flex:1">비슷한 말 ${g.i.length}개 보기</button></div>`
+  ).join("");
+  $("#tsynm").hidden=false;
+}
+function tSelText(id){
+  const el=$(id); if(!el)return "";
+  try{
+    const a=el.selectionStart,b=el.selectionEnd;
+    if(a!=null&&b!=null&&b>a)return el.value.slice(a,b);
+  }catch(e){}
+  return "";
+}
+/* ── 문장 속 낱말 바꿔 보기 ── */
+function tWordAdvice(text){
+  const out=[],seen={};
+  TSYN.forEach(g=>g.i.forEach(x=>{
+    if(!x[3]||x[0].length<2||seen[x[0]])return;    /* 주의가 붙은 낱말만 */
+    const at=text.indexOf(x[0]);
+    if(at<0)return;
+    seen[x[0]]=1;
+    const alts=g.i.filter(y=>y[0]!==x[0]&&!y[3]).slice(0,3).map(y=>y[0]);
+    if(!alts.length)return;
+    out.push({w:x[0],at,why:x[3],alts,g:g.g});
+  }));
+  return out.sort((a,b)=>a.at-b.at).slice(0,8);
 }
 /* ── T10 한자어 ── */
 let tHQ="";
@@ -6000,7 +6084,7 @@ function tMic(){
 /* ══════════ 입력 ══════════ */
 document.addEventListener("click",ev=>{
   if($("#talk").hidden)return;
-  const t=ev.target.closest&&ev.target.closest("button");
+  const t=ev.target.closest&&ev.target.closest("button,[data-tword]");
   if(!t)return;
   const d=t.dataset||{};
   if(d.tv){tView=d.tv;tRender();window.scrollTo(0,0);return;}
@@ -6037,6 +6121,24 @@ document.addEventListener("click",ev=>{
     TS.draft=el.value; tSave(); $("#tTonePrev").innerHTML=""; tTone=null; tDrawFix(1);
     toast("한 줄 붙였습니다"); return;}
   if(t.id==="tMic"){tMic();return;}
+  if(d.tword){tSynPop(d.tword);return;}
+  if(d.tsyngo){
+    $("#tsynm").hidden=true;
+    const g=TSYN.find(x=>x.g===d.tsyngo);
+    if(g){tYCat=g.c;tYGrp=g.g;tYQ="";$("#tYQ").value="";}
+    tView="syn";tRender();window.scrollTo(0,0);return;}
+  if(d.tsel){
+    const w=tSelText("#"+d.tsel);
+    if(!w){toast("먼저 글에서 낱말을 드래그해 고르세요",true);return;}
+    tSynPop(w);return;}
+  if(d.twrep){
+    const[from,to]=d.twrep.split("|");
+    const el=$("#tText"); if(!el)return;
+    const at=el.value.indexOf(from);
+    if(at<0){toast("이미 바뀌었습니다",true);return;}
+    el.value=el.value.slice(0,at)+to+el.value.slice(at+from.length);
+    TS.draft=el.value; tSave(); tDrawFix(1);
+    toast(`${from} → ${to}`);return;}
   if(t.id==="tAskFix"){tAsk("fix");return;}
   if(d.task){tAsk(d.task);return;}
   if(d.tclose){$("#"+d.tclose).hidden=true;return;}
@@ -6108,7 +6210,9 @@ document.addEventListener("click",ev=>{
       +"  예) ‘안목’ → 안목 · 식견 · 혜안 · 견식 · 통찰\n"
       +"  낱말이 많아 아홉 갈래(마음·사람·정도·때·말·함·생각·글맛·일)로 접어 두었습니다.\n"
       +"  파란 [글] 은 글에서 빛나는 말, 초록 [말] 은 입말, 갈색 [공문] 은 공문 말투입니다.\n"
-      +"  ‘오늘의 낱말’ 은 날마다 바뀝니다.\n\n"
+      +"  ‘오늘의 낱말’ 은 날마다 바뀝니다.\n"
+      +"  점선 밑줄이 그어진 낱말을 누르면 그 자리에서 뜻과 비슷한 말이 뜹니다.\n"
+      +"  글에서 낱말을 드래그한 뒤 ‘낱말 뜻’ 을 눌러도 됩니다.\n\n"
       +"[표현 찾기] 문장 단위입니다. 아무 말이나 치면 그 상황의 표현이 격식 순으로 나옵니다.\n"
       +"  ‘미안’ 이든 ‘죄송’ 이든 같은 묶음이 뜹니다.\n"
       +"  ☆ 를 누르면 내 표현 탭에 모입니다.\n\n"
