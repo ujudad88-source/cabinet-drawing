@@ -265,9 +265,10 @@ body.in-app #home,body.in-app #rack,body.in-app #talk{display:none!important}
   border-radius:6px;background:var(--panel);color:var(--ink-2);cursor:pointer}
 .tcard .act button:hover{border-color:var(--accent);color:var(--accent)}
 .tcard .act button.on{border-color:var(--accent);color:var(--accent);font-weight:600}
-#tText{font:inherit;font-size:15px;line-height:1.7;width:100%;min-height:150px;padding:11px;
+#tText,#tRText{font:inherit;font-size:15px;line-height:1.7;width:100%;min-height:150px;padding:11px;
   border:1.5px solid var(--line-2);border-radius:var(--r-s);background:var(--panel-2);color:var(--ink);resize:vertical}
-#tText:focus{border-color:var(--accent);outline:none}
+#tRText{min-height:90px}
+#tText:focus,#tRText:focus{border-color:var(--accent);outline:none}
 .tfix{border:1px solid var(--line);border-left:3px solid var(--danger);border-radius:var(--r-s);
   background:var(--panel-2);padding:9px 11px;margin-bottom:6px}
 .tfix.tone{border-left-color:#d08a1e} .tfix.word{border-left-color:#2b6cb0}
@@ -425,10 +426,40 @@ body.in-app #home,body.in-app #rack,body.in-app #talk{display:none!important}
     <textarea id="tText" placeholder="카톡·문자에 보낼 문장을 그대로 붙여 넣으세요."></textarea>
     <div class="row">
       <button class="btn pri" id="tCheck" style="flex:1">다듬을 곳 찾기</button>
+      <button class="btn" id="tMic" title="말로 받아쓰기">🎤 말로</button>
       <button class="btn" id="tCopyAll">복사</button>
       <button class="btn gho" id="tWipe">비움</button>
     </div>
+    <div class="row" style="margin-top:10px">
+      <span style="font-size:11px;color:var(--ink-3)">말투 바꾸기</span>
+      <div class="chips" id="tTone">
+        <button class="chip" data-ttone="formal">격식 있게</button>
+        <button class="chip" data-ttone="soft">부드럽게</button>
+        <button class="chip" data-ttone="short">짧게</button>
+        <button class="chip" data-ttone="wit">위트 있게</button>
+      </div>
+    </div>
+    <div id="tTonePrev"></div>
     <div id="tFixes" style="margin-top:12px"></div>
+  </section>
+
+  <section id="tReadBox" hidden>
+    <div class="shd"><h2>받은 말</h2><span class="note">고객이 보낸 문장을 붙여 넣으세요</span></div>
+    <textarea id="tRText" placeholder="예: 검토해 보고 연락드릴게요"></textarea>
+    <div class="row">
+      <button class="btn pri" id="tRGo" style="flex:1">속뜻 보기</button>
+      <button class="btn gho" id="tRWipe">비움</button>
+    </div>
+    <div id="tReads" style="margin-top:12px"></div>
+  </section>
+
+  <section id="tHanBox" hidden>
+    <div class="shd"><h2>한자어 · 공문 말</h2><span class="note">공문에서 만나는 말의 쉬운 뜻</span></div>
+    <div class="tsearch">
+      <input id="tHQ" placeholder="귀사 · 상기 · 기성 · 하자담보 …" autocomplete="off">
+      <button class="btn gho" id="tHClear">지움</button>
+    </div>
+    <div id="tHans" style="margin-top:12px"></div>
   </section>
 
   <section id="tTplBox" hidden>
@@ -4443,7 +4474,88 @@ const TTPL=[
  ["거절 (완곡)","{이름}님 안녕하십니까.\n말씀 주신 조건은 검토했습니다만 이번에는 맞추기 어렵겠습니다.\n대신 {품목} 사양을 조정하는 방법은 어떠신지요."]
 ];
 
-let TS={fav:[],mine:[],draft:"",v:{}};
+/* T2 — 말투 바꾸기 */
+const TTONE={
+ formal:[["고마워요","감사합니다"],["고마워","감사합니다"],["미안해요","죄송합니다"],["미안해","죄송합니다"],
+  ["알겠어요","알겠습니다"],["알았어요","알겠습니다"],["할게요","하겠습니다"],["드릴게요","드리겠습니다"],
+  ["보낼게요","보내 드리겠습니다"],["할래요","하겠습니다"],["해요","합니다"],["이에요","입니다"],
+  ["예요","입니다"],["주세요","주시기 바랍니다"],["부탁해요","부탁드립니다"],["그래요","그렇습니다"],
+  ["어때요","어떠신지요"],["돼요","됩니다"],["안 돼요","어렵겠습니다"]],
+ soft:[["안 됩니다","어렵겠습니다"],["안됩니다","어렵겠습니다"],["불가합니다","어렵겠습니다"],
+  ["빨리","가능한 한 빠르게"],["확인 부탁드립니다","번거로우시겠지만 확인 부탁드립니다"],
+  ["해 주세요","해 주시면 감사하겠습니다"],["주세요","주시면 감사하겠습니다"],
+  ["모르겠습니다","확인해서 알려 드리겠습니다"],["회신 요망","회신 부탁드립니다"],
+  ["확인 요망","확인 부탁드립니다"],["하십시오","해 주시면 감사하겠습니다"],
+  ["언제 되나요","진행 상황이 어떻게 되는지요"]],
+ short:[["번거로우시겠지만 ",""],["바쁘신 줄 압니다만 ",""],["가능하시면 ",""],
+  ["해 주시면 감사하겠습니다","부탁드립니다"],["주시면 감사하겠습니다","부탁드립니다"],
+  ["확인해 주시기 바랍니다","확인 부탁드립니다"],["말씀해 주시기 바랍니다","알려 주십시오"],
+  ["하여 주시기 바랍니다","부탁드립니다"],["그리고 ",""],["또한 ",""],["아무쪼록 ",""],
+  ["다시 한번 ",""],["진행하도록 하겠습니다","진행하겠습니다"],["하도록 하겠습니다","하겠습니다"]],
+ wit:[["확인 부탁해요","한 번만 봐 주시면 됩니다"],["부탁해요","한 번만 부탁드립니다"],
+  ["알려주세요","한 줄만 주셔도 됩니다"],["알려 주세요","한 줄만 주셔도 됩니다"],
+  ["고마워요","늘 감사합니다"],["고맙습니다","늘 감사합니다"],["미안해요","제가 면목이 없습니다"],
+  ["확인 부탁드립니다","한 번만 봐 주시면 됩니다"],["검토 부탁드립니다","편하실 때 훑어봐 주십시오"],
+  ["감사합니다","덕분에 수월했습니다"],["빨리","서둘러"],["안 됩니다","이번엔 제가 힘이 부족했습니다"],
+  ["부탁드립니다","슬쩍 부탁드립니다"],["회신 부탁드립니다","짧게 한 줄만 주셔도 됩니다"],
+  ["어렵겠습니다","이번엔 아쉽게 되었습니다"],["죄송합니다","면목이 없습니다"]]};
+/* 위트 — 끝에 붙일 '센스 한 줄' 후보 */
+const TWIT=["오늘도 좋은 하루 되십시오.","바쁘신 와중에 시간 내 주셔서 감사합니다.",
+ "커피 한 잔 드시면서 천천히 보셔도 됩니다.","늘 빠른 회신 감사드립니다.",
+ "현장 나가시는 길 조심히 다녀오십시오.","이번 건도 잘 맞춰 보겠습니다.",
+ "다음에 현장 가면 커피 한 잔 사겠습니다.","점심은 맛있게 드셨는지요.",
+ "날이 부쩍 바뀌었습니다. 건강 챙기십시오.","금요일이라 마음이 조금 가볍습니다."];
+const TTONEN={formal:"격식 있게",soft:"부드럽게",short:"짧게",wit:"위트 있게"};
+/* T6 — 받은 말 해석 [찾을 말들, 속뜻, 어떻게 볼 것, 답변 예시] */
+const TREAD=[
+ ["검토해 검토하고 검토 후 보고 연락드릴","대체로 보류입니다","나쁜 신호는 아니지만 기한을 못 박지 않으면 흐지부지됩니다","감사합니다. 그럼 OO일쯤 다시 여쭙겠습니다."],
+ ["생각 좀 생각해 고민","보류 — 결정 못 한 상태","망설이는 이유가 따로 있습니다. 무엇이 걸리는지 물어보세요","혹시 걸리시는 부분이 있으면 편히 말씀해 주십시오. 맞춰 보겠습니다."],
+ ["단가가 가격이 좀 비싸 비싼","비싸다는 신호입니다","거절이 아니라 협상 시작입니다","수량을 조금 늘리시면 조정해 드릴 수 있습니다. 예산 범위를 알려 주시면 맞춰 보겠습니다."],
+ ["윗선 결재 사장님 본부장 보고해야","결정권이 없거나 시간을 버는 중","상대를 도울 자료를 주면 빨라집니다","보고에 쓰실 수 있게 요약본 한 장 만들어 보내 드리겠습니다."],
+ ["다른 데도 타업체 비교 알아보","가격 비교 중 — 협상 신호","값만 말고 우리만의 강점을 하나 더 얹으세요","비교해 보시는 게 맞습니다. 저희는 납기와 사후 대응으로 봐 주시면 감사하겠습니다."],
+ ["다음에 기회되면 나중에 추후","사실상 거절입니다","매달리지 말고 관계를 남기세요","알겠습니다. 다음 기회에 잘 부탁드립니다. 필요하실 때 편히 연락 주십시오."],
+ ["그건 좀 그게 좀 조금 그렇","거절 또는 강한 부담","말끝을 흐리면 거의 아니오입니다","어려우시면 다른 방법으로 찾아보겠습니다."],
+ ["예산이 예산 없어 예산이 없","시기 문제 — 다음 분기 재접촉","지금 밀면 관계만 상합니다","알겠습니다. 다음 예산 잡히실 때쯤 다시 인사드리겠습니다."],
+ ["일단 보내 일단 주세요 자료만","관심은 있으나 순위가 낮습니다","보내고 끝내지 말고 다시 볼 날짜를 잡으세요","보내 드리겠습니다. OO일쯤 한 번 더 여쭤도 될까요?"],
+ ["샘플 실물 한번 볼 수","진성 관심입니다","가장 좋은 신호 — 바로 움직이세요","바로 준비해서 가져다 드리겠습니다. 언제가 편하신지요."],
+ ["가격만 맞으면 조건만 맞으면","구매 의사 있음 — 협상 단계","이제 숫자 싸움입니다","맞춰 보겠습니다. 생각하시는 선을 알려 주시면 가능한지 바로 확인하겠습니다."],
+ ["결재 올렸 품의 올렸 상신","진행 중 — 긍정","조용히 기다리되 일정은 확인해 두세요","감사합니다. 결재 나면 바로 준비하겠습니다."],
+ ["빨리 급해 언제 되나 아직","일정 압박","변명보다 날짜를 주세요","OO일까지 맞추겠습니다. 중간에 진행 상황 다시 알려 드리겠습니다."],
+ ["품질이 마감이 좀 상태가","클레임 전조입니다","가볍게 넘기지 말고 바로 확인하세요","바로 확인하겠습니다. 어느 부분인지 사진 한 장만 주시면 감사하겠습니다."],
+ ["알겠습니다 네 확인했습니다","단답 — 불만일 수 있습니다","앞 대화가 껄끄러웠다면 한 번 풀고 가세요","혹시 불편하셨던 부분 있으면 편히 말씀해 주십시오."],
+ ["고생하셨 수고하셨 잘 받았","마무리 신호입니다","여기서 다음 건을 한 줄 심으세요","감사합니다. 다음 건도 필요하시면 편히 연락 주십시오."],
+ ["언제 한번 봐요 밥 한번 나중에 뵙","사교적 인사 — 약속이 아닙니다","날짜를 말하지 않으면 실행되지 않습니다","좋습니다. 다음 주 중에 제가 한 번 찾아뵙겠습니다."],
+ ["다음 주에 이번 주는 좀 지금은","이번 주는 어렵다는 뜻","날짜를 지금 못 박아 두세요","알겠습니다. 그럼 다음 주 OO일쯤 연락드리겠습니다."],
+ ["도면 보내 규격 알려 사양","실무 진행 — 좋은 신호","빠를수록 유리합니다","바로 보내 드리겠습니다. 확인하시고 말씀 주십시오."],
+ ["계약서 발주서 서류","계약 단계입니다","서류를 먼저 준비해 속도를 내세요","준비해서 오늘 중으로 보내 드리겠습니다."]];
+/* T10 — 한자어·공문 말 [말, 쉬운 뜻, 한 줄 설명] */
+const THAN=[
+ ["귀사","그쪽 회사","상대 회사를 높여 부르는 말"],["당사","저희 회사","우리 회사를 가리키는 공식 말"],
+ ["폐사","저희 회사","당사를 더 낮춘 말"],["본사","우리 회사","지사와 구분할 때"],
+ ["상기","위에 적은","상기 내용 = 위 내용"],["하기","아래 적는","하기와 같이 = 아래와 같이"],
+ ["금일","오늘","문자에서 금요일로 오해가 잦습니다"],["명일","내일",""],["익일","다음 날",""],
+ ["작일","어제",""],["금주","이번 주",""],["차주","다음 주",""],["금월","이번 달",""],
+ ["송부","보냄","송부 바랍니다 = 보내 주십시오"],["수령","받음","수령 확인 = 받았는지 확인"],
+ ["지참","가져옴","지참 바랍니다 = 가져와 주십시오"],["첨부","같이 붙임",""],["별첨","따로 붙임",""],
+ ["회신","답장","회신 바랍니다 = 답 주십시오"],["기 발송","이미 보냄","'기(旣)'는 이미"],
+ ["부득이","어쩔 수 없이",""],["필히","반드시",""],["조속히","되도록 빨리",""],
+ ["소정의","정해진","소정의 양식 = 정해진 서식"],["해당","그","해당 건 = 그 건"],
+ ["당해","그","당해 연도 = 그 해"],["상호","서로",""],["갑·을","발주자·수주자","계약서에서 갑=맡기는 쪽"],
+ ["기성","여태 한 일의 값","기성 청구 = 한 만큼 돈 청구"],["기성고","진행된 공사량",""],
+ ["준공","공사 끝냄",""],["착공","공사 시작",""],["공기","공사 기간",""],
+ ["납품","물건 넘김",""],["검수","받아서 확인","검수 후 대금 지급"],["인수","넘겨받음",""],
+ ["하자","흠·불량","하자보수 = 흠 고쳐 주기"],["하자담보","고쳐 줄 책임","보통 1~2년"],
+ ["유예","미뤄 줌","납기 유예 = 기한 미룸"],["연체","기한 넘김",""],["청구","돈 달라고 함",""],
+ ["정산","셈을 맞춤",""],["잔금","남은 돈",""],["계약금","먼저 주는 돈",""],["선금","미리 받는 돈",""],
+ ["견적","값 계산서",""],["발주","주문을 냄",""],["수주","주문을 받음",""],
+ ["입찰","값을 적어 내는 경쟁",""],["낙찰","따냄",""],["유찰","아무도 못 따냄",""],
+ ["수의계약","경쟁 없이 맺는 계약",""],["도급","일을 통째로 맡김",""],["하도급","맡은 일을 다시 맡김",""],
+ ["원청","일을 준 쪽",""],["협력업체","같이 일하는 업체",""],
+ ["시방서","어떻게 만들지 적은 문서",""],["내역서","품목·수량·금액 표",""],["산출내역","계산 근거",""],
+ ["자재","재료",""],["시공","실제로 지음·설치",""],["감리","제대로 하는지 감독",""],
+ ["준용","그대로 따름",""],["의거","~에 따라",""],["상회","웃돔",""],["하회","밑돎",""]];
+
+let TS={fav:[],mine:[],draft:"",v:{},read:""};
 let tView="find", tQ="", tGrp="", tFmt=0;
 function tLoad(){
   try{const v=JSON.parse(localStorage.getItem(TLS)||"null");
@@ -4519,7 +4631,7 @@ function tFillTpl(body){
 }
 
 /* ══════════ 그리기 ══════════ */
-const TTABS=[["find","표현 찾기"],["fix","문장 다듬기"],["tpl","문구 틀"],["mine","내 표현"]];
+const TTABS=[["find","표현 찾기"],["fix","문장 다듬기"],["read","받은 말"],["tpl","문구 틀"],["han","한자어"],["mine","내 표현"]];
 function tRender(){
   $("#tTabs").innerHTML=TTABS.map(([v,l])=>
     `<button class="chip" data-tv="${v}" aria-pressed="${tView===v}">${l}</button>`).join("");
@@ -4527,10 +4639,14 @@ function tRender(){
   $("#tFixBox").hidden=tView!=="fix";
   $("#tTplBox").hidden=tView!=="tpl";
   $("#tMineBox").hidden=tView!=="mine";
+  $("#tReadBox").hidden=tView!=="read";
+  $("#tHanBox").hidden=tView!=="han";
   if(tView==="find")tDrawFind();
   if(tView==="fix")tDrawFix();
   if(tView==="tpl")tDrawTpl();
   if(tView==="mine")tDrawMine();
+  if(tView==="read")tDrawRead();
+  if(tView==="han")tDrawHan();
 }
 function tDrawFind(){
   $("#tFmt").innerHTML=[[0,"전체"],[3,"격식"],[2,"기본"],[1,"친근"]].map(([v,l])=>
@@ -4615,6 +4731,122 @@ function tDrawMine(){
      +`표현 찾기에서 ☆ 를 누르면 여기에 쌓입니다.</p>`;
 }
 
+/* ── T2 말투 바꾸기 ── */
+let tTone=null;
+function tToneApply(kind,t){
+  let out=t;
+  (TTONE[kind]||[]).forEach(([a,b])=>{
+    /* 말끝(~다·~요)으로 끝나는 말은 문장이 끝나는 자리에서만 바꾼다.
+       그래야 '안 됩니다라면' 같은 곳에 끼어들지 않는다. */
+    const ender=/[다요오죠까]$/.test(a);
+    let res="",i=0;
+    for(;;){
+      const at=out.indexOf(a,i);
+      if(at<0){res+=out.slice(i);break;}
+      const nx=out[at+a.length]||"";
+      const ok=!ender||nx===""||".!?,\n  …".indexOf(nx)>=0;
+      res+=out.slice(i,at)+(ok?b:a);
+      i=at+a.length;
+    }
+    out=res;
+  });
+  return out;
+}
+function tDrawTone(kind){
+  const t=$("#tText").value;
+  if(!t.trim()){toast("먼저 문장을 넣어 주세요",true);return;}
+  const out=tToneApply(kind,t);
+  tTone={kind,out};
+  const same=out===t;
+  const wit=kind==="wit"
+    ? `<div class="shd" style="margin:12px 0 7px"><h2 style="cursor:default">붙일 만한 한 줄</h2>`
+      +`<span class="note">누르면 끝에 붙습니다</span></div>`
+      +TWIT.slice(0,10).sort(()=>Math.random()-.5).slice(0,3).map(w=>
+        `<div class="tfix tone" style="border-left-color:#3f7f5f"><div class="l1">${esc(w)}</div>`
+        +`<button data-twit="${esc(w)}">끝에 붙이기</button></div>`).join("")
+    : "";
+  $("#tTonePrev").innerHTML=`<div class="shd" style="margin:14px 0 7px">`
+    +`<h2 style="cursor:default">${TTONEN[kind]} 바꾼 문장</h2>`
+    +`<span class="note">${same?"바꿀 말을 찾지 못했습니다":"마음에 들면 바꾸기"}</span></div>`
+    +`<div class="tcard" style="border-left-color:#2b6cb0">`
+    +`<p class="ex" style="white-space:pre-wrap;margin:0">${esc(out)}</p>`
+    +`<div class="act">${same?"":`<button data-ttoneok="1">이걸로 바꾸기</button>`}`
+    +`<button data-tcopy="${esc(out)}">복사</button>`
+    +`<button data-ttonex="1">닫기</button></div></div>`+wit;
+}
+/* ── T6 받은 말 해석 ── */
+function tReadFind(t){
+  const q=(t||"").replace(/\s+/g," ");
+  if(!q.trim())return [];
+  const out=[];
+  TREAD.forEach(r=>{
+    const keys=r[0].split(" ");
+    const hit=keys.filter(k=>k&&q.indexOf(k)>=0).length;
+    if(hit)out.push({r,hit});
+  });
+  return out.sort((a,b)=>b.hit-a.hit).slice(0,5).map(x=>x.r);
+}
+function tDrawRead(){
+  const el=$("#tRText");
+  if(el.value===""&&TS.read)el.value=TS.read;
+  const t=el.value;
+  if(!t.trim()){$("#tReads").innerHTML="";return;}
+  const hits=tReadFind(t);
+  if(!hits.length){
+    $("#tReads").innerHTML=`<div class="tok" style="color:var(--ink-3);border-color:var(--line-2)">`
+      +`아는 말이 없습니다. 짧은 한 문장으로 넣어 보세요.<br>`
+      +`<span style="font-size:12.5px">예 : 검토해 보고 연락드릴게요 / 단가가 좀…</span></div>`;
+    return;
+  }
+  $("#tReads").innerHTML=hits.map(r=>
+    `<div class="tcard" style="border-left-color:#2b6cb0">`
+    +`<div class="w">${esc(r[1])}</div>`
+    +`<p class="use">${esc(r[2])}</p>`
+    +`<p class="ex">${esc(r[3])}</p>`
+    +`<div class="act"><button data-tcopy="${esc(r[3])}">답변 복사</button>`
+    +`<button data-tput="${esc(r[3])}">문장에 넣기</button></div></div>`).join("");
+}
+/* ── T10 한자어 ── */
+let tHQ="";
+function tDrawHan(){
+  const q=tHQ.trim();
+  const list=THAN.filter(h=>!q||h[0].indexOf(q)>=0||h[1].indexOf(q)>=0||(h[2]||"").indexOf(q)>=0);
+  if(!list.length){
+    $("#tHans").innerHTML=`<div class="tok" style="color:var(--ink-3);border-color:var(--line-2)">`
+      +`‘${esc(q)}’ 는 아직 없습니다.</div>`;
+    return;
+  }
+  $("#tHans").innerHTML=`<div class="shd" style="margin:0 0 8px"><h2 style="cursor:default">${list.length}개</h2></div>`
+    +list.map(h=>`<div class="tcard" style="border-left-color:#8a6d3b;padding:8px 12px">`
+    +`<div class="w" style="font-size:15px">${esc(h[0])} <span style="color:var(--ink-3);font-weight:400">→</span> ${esc(h[1])}</div>`
+    +(h[2]?`<p class="use" style="margin-top:3px">${esc(h[2])}</p>`:"")+`</div>`).join("");
+}
+/* ── T8 말로 받아쓰기 ── */
+let tRec=null;
+function tMic(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){
+    toast("이 브라우저는 말로 받아쓰기를 못 합니다 — 키보드의 🎤 를 쓰세요",true);
+    return;
+  }
+  if(tRec){try{tRec.stop();}catch(e){}tRec=null;$("#tMic").classList.remove("pri");return;}
+  const r=new SR();
+  r.lang="ko-KR"; r.interimResults=false; r.maxAlternatives=1; r.continuous=false;
+  r.onresult=e=>{
+    const t=e.results[0][0].transcript;
+    const el=$("#tText");
+    el.value=(el.value?el.value+" ":"")+t;
+    TS.draft=el.value; tSave(); tDrawFix(1);
+    toast("받아썼습니다 — 다듬을 곳을 찾아 보세요");
+  };
+  r.onerror=e=>{
+    toast(e.error==="not-allowed"?"마이크를 허용해 주세요":"잘 듣지 못했습니다",true);
+  };
+  r.onend=()=>{tRec=null;$("#tMic").classList.remove("pri");};
+  try{r.start();tRec=r;$("#tMic").classList.add("pri");toast("말씀하세요…");}
+  catch(e){toast("마이크를 열지 못했습니다",true);}
+}
+
 /* ══════════ 입력 ══════════ */
 document.addEventListener("click",ev=>{
   if($("#talk").hidden)return;
@@ -4642,6 +4874,22 @@ document.addEventListener("click",ev=>{
     const fs=tCheck($("#tText").value);
     const f=fs[+d.tfixi]; if(f)tApply(f); return;}
   if(t.id==="tClear"){tQ="";$("#tQ").value="";tDrawFind();$("#tQ").focus();return;}
+  if(d.ttone){tDrawTone(d.ttone);return;}
+  if(d.ttoneok){
+    if(!tTone)return;
+    $("#tText").value=tTone.out; TS.draft=tTone.out; tSave();
+    $("#tTonePrev").innerHTML=""; tTone=null; tDrawFix(1);
+    toast("말투를 바꿨습니다"); return;}
+  if(d.ttonex){$("#tTonePrev").innerHTML="";tTone=null;return;}
+  if(d.twit){
+    const el=$("#tText");
+    el.value=(el.value.replace(/\s+$/,""))+"\n"+d.twit;
+    TS.draft=el.value; tSave(); $("#tTonePrev").innerHTML=""; tTone=null; tDrawFix(1);
+    toast("한 줄 붙였습니다"); return;}
+  if(t.id==="tMic"){tMic();return;}
+  if(t.id==="tRGo"){TS.read=$("#tRText").value;tSave();tDrawRead();return;}
+  if(t.id==="tRWipe"){$("#tRText").value="";TS.read="";tSave();tDrawRead();return;}
+  if(t.id==="tHClear"){tHQ="";$("#tHQ").value="";tDrawHan();$("#tHQ").focus();return;}
   if(t.id==="tCheck"){TS.draft=$("#tText").value;tSave();tDrawFix(1);return;}
   if(t.id==="tCopyAll"){tCopy($("#tText").value);return;}
   if(t.id==="tWipe"){
@@ -4665,6 +4913,11 @@ document.addEventListener("click",ev=>{
       +"  맞춤법·띄어쓰기는 눌러서 바로 고쳐집니다.\n"
       +"  말투는 고칠지 말지 직접 고르세요.\n\n"
       +"[문구 틀] 이름·현장·날짜만 채우면 문장이 완성됩니다.\n\n"
+      +"[말투 바꾸기] 쓴 문장을 격식 있게·부드럽게·짧게·위트 있게 바꿔 보여 줍니다.\n"
+      +"  ‘위트 있게’ 는 끝에 붙일 만한 한 줄도 같이 골라 줍니다.\n\n"
+      +"[🎤 말로] 운전 중이면 말로 받아쓰세요. (아이폰 사파리는 키보드의 마이크를 쓰세요)\n\n"
+      +"[받은 말] 고객이 보낸 애매한 말의 속뜻과 답변 예시를 보여 줍니다.\n\n"
+      +"[한자어] 공문에 나오는 어려운 말의 쉬운 뜻.\n\n"
       +"[내 표현] 사전에 없는 말을 직접 넣어 두면 계속 남습니다.");
     return;}
 });
@@ -4672,6 +4925,8 @@ document.addEventListener("input",ev=>{
   if($("#talk").hidden)return;
   const id=ev.target.id, v=ev.target.value;
   if(id==="tQ"){tQ=v;tDrawFind();return;}
+  if(id==="tHQ"){tHQ=v;tDrawHan();return;}
+  if(id==="tRText"){TS.read=v;tSave();return;}
   if(id==="tText"){TS.draft=v;tSave();$("#tLen").textContent=v.length?`${v.length}자`:"";return;}
   const vk={tvSite:"site",tvName:"name",tvItem:"item",tvDate:"date",tvMe:"me"};
   if(vk[id]){TS.v=TS.v||{};TS.v[vk[id]]=v;tSave();tDrawTpl();return;}
