@@ -499,7 +499,9 @@ body.in-app #home,body.in-app #rack,body.in-app #talk{display:none!important}
       <input id="tYQ" placeholder="안목 · 검토 · 도움 · 노력 · 알림 …" autocomplete="off">
       <button class="btn gho" id="tYClear">지움</button>
     </div>
+    <div class="tgrp" id="tYCats" style="margin-top:10px"></div>
     <div class="tgrp" id="tYGrps"></div>
+    <div id="tYToday" style="margin-top:12px"></div>
     <div id="tSyns" style="margin-top:12px"></div>
   </section>
 
@@ -5470,6 +5472,41 @@ const TSYN=[
  ["겸허히","자기를 낮추어","지적을 받아들일 때","","겸허히 받아들이겠습니다"],
  ["조심스럽게","말을 아끼며","어려운 말을 꺼낼 때","","조심스럽게 말씀드리면"]]}];
 
+/* 큰 갈래 — 124묶음을 아홉으로 접는다 */
+const TCAT=[
+ ["마음","기쁨·서러움·걱정 같은 속마음",
+  "고마움|잘못 · 사과|기대 · 바람|기쁨|서운함|언짢음|걱정|놀람|부끄러움|좋아함 · 싫어함|애틋하다 · 사무치다|벅차다 · 뭉클하다|담담하다 · 의연하다|소회 · 정취"],
+ ["사람","됨됨이·태도·관계",
+  "믿음|함께|솜씨 · 실력|성실함|친절함|똑똑함|꼼꼼함 · 대충|솔직함 · 까다로움|바쁨 · 피곤|몸 · 건강|사람 부르기|만남 · 관계|야무지다 · 다부지다|무던하다 · 듬직하다|몸가짐 · 품위"],
+ ["정도","크기·양·질을 재는 말",
+  "빠름|꼼꼼함|많음 · 적음|좋다 · 나쁘다|크다 · 작다|많다 · 적다|쉽다 · 어렵다|새롭다 · 낡다|매우 · 조금|양 · 수량|어림잡아 · 얼추|여느 · 뭇|두루 · 고루|그윽하다 · 잔잔하다|아득하다 · 막막하다"],
+ ["때","시간·때를 가리키는 말",
+  "늦어짐|앞으로 · 지금|지금 · 곧|자주 · 가끔|늘 · 미리|문득 · 어느새|이윽고 · 마침내|저물다 · 잦아들다"],
+ ["말","말하고 주고받는 말",
+  "부탁|알림|의견|말하다|묻다 · 답하다|설명 · 해명|칭찬 · 지적|이를테면 · 가령|넌지시 · 대놓고|삼가 · 정중히|부디 · 아무쪼록"],
+ ["함","몸으로 하는 일",
+  "도움|살펴봄|애씀|봐 줌 · 이해|보냄|받음|마무리|고침|처리|보다|가다 · 오다|하다 · 만들다|주다|기다리다 · 그만두다|참다 · 견디다|먹다 · 자다 · 쉬다|아우르다 · 망라하다|갈무리 · 추스르다|다독이다 · 보듬다|빚다 · 일구다|다다르다 · 닿다|삼가다 · 아끼다|망설이다|기꺼이 · 마지못해"],
+ ["생각","머리로 헤아리는 말",
+  "보는 눈 · 판단력|정함|생각하다|알다 · 모르다|의심|가늠하다 · 헤아리다|곱씹다 · 돌이키다|속내 · 취지"],
+ ["글맛","문장의 결을 살리는 말",
+  "사뭇 · 자못|되레 · 오히려|무릇 · 마땅히|자칫 · 행여|오롯이 · 고스란히|깃들다 · 스미다|결 · 낌새|자취 · 여운|아무튼 · 아무래도|하물며 · 더군다나|그래서 · 하지만|반드시 · 아마|정말 · 거의"],
+ ["일","업무·거래에서 쓰는 말",
+  "값 · 금액|값 내림 · 올림|어려움|흠|자리 · 기회|일 · 업무|결과|책임|규정 · 기준|형편 · 처지|몫 · 소임|고비 · 갈림길|바탕 · 토대|자초지종 · 경위|실마리 · 갈피|겨를 · 여지"]];
+(function(){                                     /* 묶음마다 갈래를 달아 둔다 */
+  const m={};
+  TCAT.forEach(([c,,list])=>list.split("|").forEach(g=>{m[g]=c;}));
+  TSYN.forEach(g=>{g.c=m[g.g]||"그 밖";});
+})();
+/* 글맛 표시 — 글에서 빛나는 말 / 입말에서 자연스러운 말 / 공문 말투 */
+const TTAG={};
+"시나브로|자못|외려|무릇|모름지기|저어하다|사위다|망연하다|반추하다|예컨대|여하튼|이윽고|비로소|기로|바라건대|못내|불현듯|에둘러|오롯이|켜켜이|고스란히|여미다|추스르다|곱씹다|깃들다|스미다|묻어나다|잦아들다|다다르다|그윽하다|고즈넉하다|애틋하다|아련하다|사무치다|절절하다|옹골차다|여무지다|의젓하다|감개무량하다|북받치다|자취|여운|소회|감회|회포|정취|운치|기품|격조|전말|자초지종|분수령|기틀|밑거름|숱한|갖은|저마다|퍽|사뭇|짐짓|일구다|무르익다|자아내다|아우르다|망라하다|삼가|겸허히"
+ .split("|").forEach(w=>TTAG[w]="글");
+"되레|대놓고|어차피|얼추|게다가|어쨌든|낌새|짬|살갑다|황당하다|신경 쓰이다|고생이 많다|꼭|정말|진짜|아마|가끔|자주|바쁘다|괜찮다|좋아하다|내키지 않다|허술하다|대충|까다롭다|깐깐하다"
+ .split("|").forEach(w=>TTAG[w]="말");
+"요망|필히|용이하다|이에|귀하|당사|폐사|통지|통보|공지|제출|송부|수령|인지|숙지|귀책|이행|준용|상기|하기|금일|명일|익일|작일|향후|사의|진력|하회|상회|부득이|소정의"
+ .split("|").forEach(w=>TTAG[w]="공문");
+const TTAGC={"글":"#2b6cb0","말":"#3f7f5f","공문":"#8a6d3b"};
+
 let TS={fav:[],mine:[],draft:"",v:{},read:"",mail:{s:"",b:"",sig:""},ai:0};
 let tView="syn", tQ="", tGrp="", tFmt=0;
 function tLoad(){
@@ -5727,21 +5764,70 @@ function tDrawRead(){
     +`<button data-tput="${esc(r[3])}">문장에 넣기</button></div></div>`).join("");
 }
 /* ── 유의어 고르기 ── */
-let tYQ="", tYGrp="";
+let tYQ="", tYGrp="", tYCat="";
+/* 낱말 카드 하나 */
+function tSynCard(x){
+  const fav=(TS.fav||[]).includes(x[0]);
+  const tg=TTAG[x[0]];
+  return `<div class="tcard">`
+   +`<div class="w">${esc(x[0])}`
+   +(tg?` <span class="tag" style="border-color:${TTAGC[tg]};color:${TTAGC[tg]};font-size:10.5px;padding:1px 7px">${tg}</span>`:"")
+   +`</div>`
+   +`<p class="use" style="margin-top:4px"><b style="color:var(--ink)">뜻</b> ${esc(x[1])}</p>`
+   +(x[2]?`<p class="use"><b style="color:var(--ok)">이럴 때</b> ${esc(x[2])}</p>`:"")
+   +(x[3]?`<p class="no">주의 — ${esc(x[3])}</p>`:"")
+   +(x[4]?`<p class="ex">${esc(x[4])}</p>`:"")
+   +`<div class="act"><button data-tcopy="${esc(x[4]||x[0])}">복사</button>`
+   +`<button data-tfav="${esc(x[0])}" class="${fav?"on":""}">${fav?"★":"☆"} 즐겨찾기</button>`
+   +`<button data-tput="${esc(x[4]||x[0])}">문장에 넣기</button></div></div>`;
+}
+/* 오늘의 낱말 — 날짜가 바뀌면 바뀐다 */
+let tYPick=null;
+function tAllWords(){
+  const a=[];
+  TSYN.forEach(g=>g.i.forEach(x=>a.push({g,x})));
+  return a;
+}
+function tDrawToday(){
+  const all=tAllWords();
+  if(!tYPick){
+    const d=new Date();
+    const n=Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/864e5);
+    tYPick=all[n%all.length];
+  }
+  const{g,x}=tYPick;
+  $("#tYToday").innerHTML=`<div class="shd" style="margin:0 0 7px">`
+    +`<h2 style="cursor:default">오늘의 낱말</h2><span class="note">${esc(g.c)} · ${esc(g.g)}</span></div>`
+    +tSynCard(x)
+    +`<div class="row" style="margin-top:0">`
+    +`<button class="btn gho" id="tYAnother" style="flex:1">다른 낱말 보기</button>`
+    +`<button class="btn gho" data-tygrp="${esc(g.g)}">이 묶음 보기</button></div>`;
+}
 function tDrawSyn(){
-  $("#tYGrps").innerHTML=[`<button class="chip" data-tygrp="" aria-pressed="${!tYGrp}">전체 ${TSYN.length}묶음</button>`]
-    .concat(TSYN.map(g=>`<button class="chip" data-tygrp="${g.g}" aria-pressed="${tYGrp===g.g}">${g.g}</button>`)).join("");
-  if(!tYQ&&!tYGrp){                                /* 342개를 한꺼번에 그리면 폰이 느려진다 */
+  $("#tYCats").innerHTML=[`<button class="chip" data-tycat="" aria-pressed="${!tYCat}">전체</button>`]
+    .concat(TCAT.map(([c])=>{
+      const n=TSYN.filter(g=>g.c===c).reduce((a,g)=>a+g.i.length,0);
+      return `<button class="chip" data-tycat="${c}" aria-pressed="${tYCat===c}">${c} <b style="font-family:var(--mono);font-weight:500">${n}</b></button>`;
+    })).join("");
+  const gs=tYCat?TSYN.filter(g=>g.c===tYCat):[];
+  $("#tYGrps").innerHTML=tYCat
+    ? [`<button class="chip" data-tygrp="" aria-pressed="${!tYGrp}">${tYCat} 전체</button>`]
+      .concat(gs.map(g=>`<button class="chip" data-tygrp="${g.g}" aria-pressed="${tYGrp===g.g}">${g.g}</button>`)).join("")
+    : "";
+  $("#tYToday").innerHTML="";
+  if(!tYQ&&!tYGrp&&!tYCat){                        /* 한꺼번에 그리면 폰이 느려진다 */
     const n=TSYN.reduce((a,g)=>a+g.i.length,0);
     $("#tSyns").innerHTML=`<div class="tok" style="color:var(--ink-3);border-color:var(--line-2)">`
-      +`낱말 <b style="color:var(--ink)">${n}개</b> · ${TSYN.length}묶음<br>`
-      +`<span style="font-size:12.5px">찾을 낱말을 치시거나 위 묶음을 누르세요.</span></div>`;
+      +`낱말 <b style="color:var(--ink)">${n}개</b> · ${TSYN.length}묶음 · ${TCAT.length}갈래<br>`
+      +`<span style="font-size:12.5px">찾을 낱말을 치시거나 위 갈래를 누르세요.</span></div>`;
+    tDrawToday();
     return;
   }
   const cs=tCands(tYQ);
   /* 묶음 이름으로 걸리면 묶음 전체, 낱말 하나만 걸리면 그 낱말만 보여 준다 */
   const res=TSYN.map(g=>{
     if(tYGrp&&g.g!==tYGrp)return null;
+    if(!tYGrp&&tYCat&&g.c!==tYCat)return null;
     if(!tYQ)return g;
     if(cs.some(c=>(g.k+" "+g.g).indexOf(c)>=0))return g;
     const items=g.i.filter(x=>cs.some(c=>(x[0]+" "+x[1]+" "+x[2]).indexOf(c)>=0));
@@ -5756,19 +5842,8 @@ function tDrawSyn(){
   }
   $("#tSyns").innerHTML=res.map(g=>
     `<div class="shd" style="margin:14px 0 7px"><h2 style="cursor:default">${g.g}</h2>`
-    +`<span class="note">${g.i.length}개</span></div>`
-    +g.i.map(x=>{
-      const fav=(TS.fav||[]).includes(x[0]);
-      return `<div class="tcard">`
-      +`<div class="w">${esc(x[0])}</div>`
-      +`<p class="use" style="margin-top:4px"><b style="color:var(--ink)">뜻</b> ${esc(x[1])}</p>`
-      +(x[2]?`<p class="use"><b style="color:var(--ok)">이럴 때</b> ${esc(x[2])}</p>`:"")
-      +(x[3]?`<p class="no">주의 — ${esc(x[3])}</p>`:"")
-      +(x[4]?`<p class="ex">${esc(x[4])}</p>`:"")
-      +`<div class="act"><button data-tcopy="${esc(x[4]||x[0])}">복사</button>`
-      +`<button data-tfav="${esc(x[0])}" class="${fav?"on":""}">${fav?"★":"☆"} 즐겨찾기</button>`
-      +`<button data-tput="${esc(x[4]||x[0])}">문장에 넣기</button></div></div>`;
-    }).join("")).join("");
+    +`<span class="note">${esc(g.c)} · ${g.i.length}개</span></div>`
+    +g.i.map(tSynCard).join("")).join("");
 }
 /* ── T10 한자어 ── */
 let tHQ="";
@@ -6002,8 +6077,16 @@ document.addEventListener("click",ev=>{
   if(t.id==="tRGo"){TS.read=$("#tRText").value;tSave();tDrawRead();return;}
   if(t.id==="tRWipe"){$("#tRText").value="";TS.read="";tSave();tDrawRead();return;}
   if(t.id==="tHClear"){tHQ="";$("#tHQ").value="";tDrawHan();$("#tHQ").focus();return;}
-  if(t.id==="tYClear"){tYQ="";$("#tYQ").value="";tDrawSyn();$("#tYQ").focus();return;}
-  if(d.tygrp!=null){tYGrp=d.tygrp;tDrawSyn();return;}
+  if(t.id==="tYClear"){tYQ="";tYCat="";tYGrp="";$("#tYQ").value="";tDrawSyn();$("#tYQ").focus();return;}
+  if(d.tycat!=null){tYCat=d.tycat;tYGrp="";tYQ="";$("#tYQ").value="";tDrawSyn();return;}
+  if(d.tygrp!=null){
+    tYGrp=d.tygrp;
+    if(tYGrp&&!tYCat){const g=TSYN.find(x=>x.g===tYGrp);if(g)tYCat=g.c;}
+    tYQ="";$("#tYQ").value="";tDrawSyn();return;}
+  if(t.id==="tYAnother"){
+    const all=tAllWords();
+    tYPick=all[Math.floor(Math.random()*all.length)];
+    tDrawToday();return;}
   if(t.id==="tCheck"){TS.draft=$("#tText").value;tSave();tDrawFix(1);return;}
   if(t.id==="tCopyAll"){tCopy($("#tText").value);return;}
   if(t.id==="tWipe"){
@@ -6022,7 +6105,10 @@ document.addEventListener("click",ev=>{
     alert("영업 문구 도우미 — 사용법\n\n"
       +"[유의어 고르기] 낱말 하나를 치면 비슷한 말이 다 나옵니다.\n"
       +"  낱말마다 뜻 · 이럴 때 쓰세요 · 주의할 점이 붙어 있어 골라 쓰시면 됩니다.\n"
-      +"  예) ‘안목’ → 안목 · 식견 · 혜안 · 견식 · 통찰\n\n"
+      +"  예) ‘안목’ → 안목 · 식견 · 혜안 · 견식 · 통찰\n"
+      +"  낱말이 많아 아홉 갈래(마음·사람·정도·때·말·함·생각·글맛·일)로 접어 두었습니다.\n"
+      +"  파란 [글] 은 글에서 빛나는 말, 초록 [말] 은 입말, 갈색 [공문] 은 공문 말투입니다.\n"
+      +"  ‘오늘의 낱말’ 은 날마다 바뀝니다.\n\n"
       +"[표현 찾기] 문장 단위입니다. 아무 말이나 치면 그 상황의 표현이 격식 순으로 나옵니다.\n"
       +"  ‘미안’ 이든 ‘죄송’ 이든 같은 묶음이 뜹니다.\n"
       +"  ☆ 를 누르면 내 표현 탭에 모입니다.\n\n"
