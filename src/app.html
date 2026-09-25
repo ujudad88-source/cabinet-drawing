@@ -240,10 +240,11 @@ body.in-app #home,body.in-app #rack,body.in-app #talk{display:none!important}
   border-radius:6px;background:var(--panel);color:var(--ink-2);cursor:pointer}
 .tcard .act button:hover{border-color:var(--accent);color:var(--accent)}
 .tcard .act button.on{border-color:var(--accent);color:var(--accent);font-weight:600}
-#tText,#tRText{font:inherit;font-size:15px;line-height:1.7;width:100%;min-height:150px;padding:11px;
+#tText,#tRText,#tMBody,#tMSig{font:inherit;font-size:15px;line-height:1.7;width:100%;min-height:150px;padding:11px;
   border:1.5px solid var(--line-2);border-radius:var(--r-s);background:var(--panel-2);color:var(--ink);resize:vertical}
 #tRText{min-height:90px}
-#tText:focus,#tRText:focus{border-color:var(--accent);outline:none}
+#tMBody{min-height:190px}
+#tText:focus,#tRText:focus,#tMBody:focus,#tMSig:focus{border-color:var(--accent);outline:none}
 .tfix{border:1px solid var(--line);border-left:3px solid var(--danger);border-radius:var(--r-s);
   background:var(--panel-2);padding:9px 11px;margin-bottom:6px}
 .tfix.tone{border-left-color:#d08a1e} .tfix.word{border-left-color:#2b6cb0}
@@ -414,8 +415,37 @@ body.in-app #home,body.in-app #rack,body.in-app #talk{display:none!important}
         <button class="chip" data-ttone="wit">위트 있게</button>
       </div>
     </div>
+    <div class="row" style="margin-top:9px">
+      <button class="btn" id="tAskFix" style="flex:1">🤖 AI에게 물어보기</button>
+      <button class="btn gho" data-task="tone">말투만</button>
+    </div>
     <div id="tTonePrev"></div>
     <div id="tFixes" style="margin-top:12px"></div>
+  </section>
+
+  <section id="tMailBox" hidden>
+    <div class="shd"><h2>메일 쓰기</h2><span class="note" id="tMailNote"></span></div>
+    <div class="f" style="margin-bottom:9px"><label for="tMSubj">제목</label>
+      <input id="tMSubj" placeholder="[광전기통신] OO빌딩 단자함 견적서 송부"></div>
+    <textarea id="tMBody" placeholder="메일 본문을 쓰거나, 아래 메일 틀을 누르세요."></textarea>
+    <div class="row">
+      <button class="btn pri" id="tMCheck" style="flex:1">메일 점검</button>
+      <button class="btn" id="tMCopy">제목+본문 복사</button>
+      <button class="btn gho" id="tMWipe">비움</button>
+    </div>
+    <div class="row" style="margin-top:9px">
+      <button class="btn" data-task="mail" style="flex:1">🤖 AI에게 메일 검토 맡기기</button>
+      <button class="btn gho" data-task="subj">제목 추천</button>
+    </div>
+    <div id="tMFixes" style="margin-top:12px"></div>
+    <div class="shd" style="margin:16px 0 8px"><h2>메일 틀</h2>
+      <span class="note">문구 틀 탭의 이름·현장이 채워집니다</span></div>
+    <div id="tMTpls"></div>
+    <div class="shd" style="margin:16px 0 8px"><h2>서명</h2>
+      <span class="note">메일 끝에 붙습니다</span></div>
+    <textarea id="tMSig" style="min-height:80px"
+      placeholder="광전기통신 정효진&#10;010-0000-0000&#10;회사 주소"></textarea>
+    <div class="row"><button class="btn gho" id="tMSigAdd" style="flex:1">본문 끝에 서명 붙이기</button></div>
   </section>
 
   <section id="tReadBox" hidden>
@@ -423,6 +453,7 @@ body.in-app #home,body.in-app #rack,body.in-app #talk{display:none!important}
     <textarea id="tRText" placeholder="예: 검토해 보고 연락드릴게요"></textarea>
     <div class="row">
       <button class="btn pri" id="tRGo" style="flex:1">속뜻 보기</button>
+      <button class="btn" data-task="read">🤖 AI에게</button>
       <button class="btn gho" id="tRWipe">비움</button>
     </div>
     <div id="tReads" style="margin-top:12px"></div>
@@ -464,6 +495,24 @@ body.in-app #home,body.in-app #rack,body.in-app #talk{display:none!important}
     <div id="tMineList"></div>
   </section>
  </div>
+</div>
+
+<div class="modal" id="taskm" hidden>
+  <div class="mbox">
+    <div class="mhd"><h3 style="margin:0;font-size:16px" id="taskTitle">AI에게 물어보기</h3>
+      <button class="btn gho" data-tclose="taskm">닫기</button></div>
+    <p class="note" style="font-size:12.5px;color:var(--ink-2);margin:0 0 10px;line-height:1.55">
+      아래 글이 복사되었습니다. <b>Claude 앱에 붙여넣기</b>만 하면 됩니다.<br>
+      쓰고 계신 구독 안에서 쓰는 것이라 <b>따로 나가는 돈은 없습니다.</b></p>
+    <textarea id="taskText" style="font:inherit;font-size:13px;line-height:1.6;width:100%;min-height:170px;
+      padding:10px;border:1px solid var(--line-2);border-radius:var(--r-s);background:var(--panel-2);
+      color:var(--ink);resize:vertical" readonly></textarea>
+    <div class="row">
+      <button class="btn" id="taskCopy" style="flex:1">다시 복사</button>
+      <button class="btn pri" id="taskOpen" style="flex:1">Claude 열기</button>
+    </div>
+    <p class="note" style="font-size:11.5px;color:var(--ink-3);margin-top:9px" id="taskCnt"></p>
+  </div>
 </div>
 
 <div id="rack" hidden>
@@ -4530,7 +4579,85 @@ const THAN=[
  ["자재","재료",""],["시공","실제로 지음·설치",""],["감리","제대로 하는지 감독",""],
  ["준용","그대로 따름",""],["의거","~에 따라",""],["상회","웃돔",""],["하회","밑돎",""]];
 
-let TS={fav:[],mine:[],draft:"",v:{},read:""};
+/* B — AI 에게 물어보기. 구독(Claude 앱) 안에서 쓰므로 따로 드는 돈이 없다 */
+const TASK={
+ fix:["문장 다듬기",
+  "아래는 영업 담당자가 거래처에 보낼 메시지입니다.\n"
+ +"맞춤법·띄어쓰기를 고치고, 상대가 재촉이나 무례로 느낄 만한 부분을 짚어 대안을 제시해 주세요.\n"
+ +"고친 문장 전체를 먼저 주고, 그다음 무엇을 왜 바꿨는지 짧게 적어 주세요."],
+ tone:["말투만 바꾸기",
+  "아래 메시지를 뜻은 그대로 두고 말투만 세 가지로 바꿔 주세요.\n"
+ +"① 격식 있게 (발주처 임원용)  ② 부드럽게 (부담 덜하게)  ③ 짧게 (핵심만)\n"
+ +"각각 바로 보낼 수 있는 완성된 문장으로 주세요."],
+ read:["받은 말 속뜻",
+  "아래는 거래처가 저에게 보낸 메시지입니다.\n"
+ +"① 속뜻이 무엇인지  ② 좋은 신호인지 나쁜 신호인지  ③ 어떻게 답하면 좋을지\n"
+ +"답장 예시까지 한국어로 짧게 알려 주세요."],
+ mail:["메일 검토",
+  "아래는 거래처에 보낼 업무 메일입니다.\n"
+ +"제목이 적절한지, 본문이 인사–용건–요청–맺음 순서로 갖춰졌는지,\n"
+ +"격식과 말투가 메일에 맞는지 봐 주세요.\n"
+ +"고친 제목과 본문 전체를 먼저 주고, 그다음 무엇을 왜 바꿨는지 적어 주세요."],
+ subj:["메일 제목 추천",
+  "아래 메일 본문에 어울리는 제목을 3개 제안해 주세요.\n"
+ +"받는 사람이 메일함에서 한눈에 알아볼 수 있게, 회사명과 현장명을 앞에 두고 30자 안쪽으로 주세요."]};
+/* 메일 틀 — [상황, 제목, 본문] */
+const TMAIL=[
+ ["견적 송부","[광전기통신] {현장} {품목} 견적서 송부",
+  "{이름}님 안녕하십니까.\n{나}입니다.\n\n요청하신 {현장} {품목} 견적서를 첨부하여 보내 드립니다.\n"
+ +"규격과 수량은 주신 도면 기준으로 산출하였으며, 변경이 필요하시면 말씀해 주십시오.\n\n"
+ +"검토 후 편하실 때 회신 주시면 감사하겠습니다.\n\n감사합니다."],
+ ["발주 확인","[광전기통신] {현장} 발주 확인 및 일정 안내",
+  "{이름}님 안녕하십니까.\n\n{현장} {품목} 발주서 잘 받았습니다.\n"
+ +"확인한 내용은 아래와 같습니다.\n\n - 품목 : {품목}\n - 수량 : \n - 납기 : {날짜}\n\n"
+ +"위 내용이 맞는지 한 번만 확인 부탁드립니다.\n회신 주시는 대로 제작에 들어가겠습니다.\n\n감사합니다."],
+ ["자료 요청","[광전기통신] {현장} 도면(현장 치수) 요청",
+  "{이름}님 안녕하십니까.\n\n{현장} {품목} 제작을 위해 도면 또는 현장 실측 치수가 필요합니다.\n"
+ +"번거로우시겠지만 한 부 보내 주시면 바로 검토해 회신 드리겠습니다.\n\n"
+ +"자료 주시면 {날짜}까지 견적과 일정 안내드리겠습니다.\n\n감사합니다."],
+ ["납기 안내","[광전기통신] {현장} {품목} 납기 안내",
+  "{이름}님 안녕하십니까.\n\n{현장} {품목} 제작이 마무리되어 일정 안내드립니다.\n\n"
+ +" - 출고 예정 : {날짜}\n - 도착 예정 : \n - 수량 : \n\n"
+ +"현장 상황에 따라 조정이 필요하시면 말씀해 주십시오.\n\n감사합니다."],
+ ["납기 지연 사과","[광전기통신] {현장} 납기 조정 안내 및 사과 말씀",
+  "{이름}님 안녕하십니까.\n\n먼저 불편을 끼쳐 드려 죄송합니다.\n"
+ +"{현장} {품목} 납기가 {날짜}로 늦어지게 되었습니다.\n\n"
+ +"사유는 아래와 같습니다.\n - \n\n"
+ +"원인은 확인하였으며, 이후 일정에는 차질이 없도록 하겠습니다.\n"
+ +"너른 양해 부탁드립니다.\n\n감사합니다."],
+ ["방문 일정 요청","[광전기통신] {현장} 방문 일정 문의",
+  "{이름}님 안녕하십니까.\n\n{현장} 건으로 한 번 찾아뵙고 말씀 나누고 싶습니다.\n"
+ +"{날짜} 오후 시간이 괜찮으신지요.\n\n"
+ +"어려우시면 편하신 시간 두어 개만 알려 주시면 맞추겠습니다.\n\n감사합니다."],
+ ["하자 조치 안내","[광전기통신] {현장} 조치 결과 안내",
+  "{이름}님 안녕하십니까.\n\n말씀 주신 {품목} 건, 확인 후 조치 내용 안내드립니다.\n\n"
+ +" - 확인 내용 : \n - 원인 : \n - 조치 : \n - 완료 예정 : {날짜}\n\n"
+ +"불편을 끼쳐 드려 다시 한번 죄송합니다.\n같은 일이 없도록 하겠습니다.\n\n감사합니다."],
+ ["세금계산서·입금 요청","[광전기통신] {현장} 세금계산서 발행 및 결제 일정 문의",
+  "{이름}님 안녕하십니까.\n\n{현장} 건 세금계산서를 발행하였습니다.\n\n"
+ +" - 발행일 : \n - 금액 : \n\n"
+ +"결제 일정 한 번 확인 부탁드립니다.\n확인 후 회신 주시면 감사하겠습니다.\n\n감사합니다."],
+ ["담당자 인사","[광전기통신] 담당자 인사드립니다",
+  "{이름}님 안녕하십니까.\n\n{나}입니다.\n"
+ +"이번에 {현장} 건을 담당하게 되어 인사드립니다.\n\n"
+ +"함체 제작·납품 업무를 맡고 있습니다.\n필요하신 일 있으시면 언제든 편히 연락 주십시오.\n\n"
+ +"앞으로 잘 부탁드립니다.\n\n감사합니다."],
+ ["신규 거래 제안","[광전기통신] 함체 제작 관련 인사 및 자료 송부",
+  "{이름}님 안녕하십니까.\n\n{나}입니다.\n"
+ +"전기·통신 함체 제작과 납품을 하고 있어 인사드립니다.\n\n"
+ +"회사 소개와 제작 사례를 첨부하여 보내 드립니다.\n"
+ +"필요하신 규격이 있으시면 도면 없이 치수만 주셔도 견적 드릴 수 있습니다.\n\n"
+ +"한 번 검토해 보시고 편하실 때 연락 주시면 감사하겠습니다.\n\n감사합니다."],
+ ["명절 인사","[광전기통신] 명절 인사드립니다",
+  "{이름}님 안녕하십니까.\n\n한 해 동안 베풀어 주신 배려에 깊이 감사드립니다.\n"
+ +"가정에 늘 건강과 평안이 함께하시기를 바랍니다.\n\n"
+ +"새해에도 변함없이 성심껏 하겠습니다.\n\n{나} 드림"],
+ ["회신 독촉","[광전기통신] {현장} 진행 관련 재문의",
+  "{이름}님 안녕하십니까.\n\n바쁘신 줄 압니다만, 앞서 보내 드린 {현장} 건 진행 상황을 여쭙습니다.\n\n"
+ +"금주 내 회신 주시면 {날짜} 일정에 맞출 수 있습니다.\n"
+ +"검토에 필요한 자료가 더 있으시면 말씀해 주십시오. 바로 준비하겠습니다.\n\n감사합니다."]];
+
+let TS={fav:[],mine:[],draft:"",v:{},read:"",mail:{s:"",b:"",sig:""},ai:0};
 let tView="find", tQ="", tGrp="", tFmt=0;
 function tLoad(){
   try{const v=JSON.parse(localStorage.getItem(TLS)||"null");
@@ -4606,7 +4733,7 @@ function tFillTpl(body){
 }
 
 /* ══════════ 그리기 ══════════ */
-const TTABS=[["find","표현 찾기"],["fix","문장 다듬기"],["read","받은 말"],["tpl","문구 틀"],["han","한자어"],["mine","내 표현"]];
+const TTABS=[["find","표현 찾기"],["fix","문장 다듬기"],["mail","메일 쓰기"],["read","받은 말"],["tpl","문구 틀"],["han","한자어"],["mine","내 표현"]];
 function tRender(){
   $("#tTabs").innerHTML=TTABS.map(([v,l])=>
     `<button class="chip" data-tv="${v}" aria-pressed="${tView===v}">${l}</button>`).join("");
@@ -4616,12 +4743,14 @@ function tRender(){
   $("#tMineBox").hidden=tView!=="mine";
   $("#tReadBox").hidden=tView!=="read";
   $("#tHanBox").hidden=tView!=="han";
+  $("#tMailBox").hidden=tView!=="mail";
   if(tView==="find")tDrawFind();
   if(tView==="fix")tDrawFix();
   if(tView==="tpl")tDrawTpl();
   if(tView==="mine")tDrawMine();
   if(tView==="read")tDrawRead();
   if(tView==="han")tDrawHan();
+  if(tView==="mail")tDrawMail();
 }
 function tDrawFind(){
   $("#tFmt").innerHTML=[[0,"전체"],[3,"격식"],[2,"기본"],[1,"친근"]].map(([v,l])=>
@@ -4796,6 +4925,81 @@ function tDrawHan(){
     +`<div class="w" style="font-size:15px">${esc(h[0])} <span style="color:var(--ink-3);font-weight:400">→</span> ${esc(h[1])}</div>`
     +(h[2]?`<p class="use" style="margin-top:3px">${esc(h[2])}</p>`:"")+`</div>`).join("");
 }
+/* ── 메일 쓰기 ── */
+function tMailGet(){
+  return{s:$("#tMSubj").value,b:$("#tMBody").value,sig:$("#tMSig").value};
+}
+function tMailSave(){
+  TS.mail=tMailGet(); tSave();
+}
+/* 메일은 카톡과 규칙이 다르다 — 구조를 본다 */
+function tMailCheck(){
+  const{s:sub,b:body,sig}=tMailGet(), out=[];
+  const add=(t,w,k)=>out.push({t,w,k:k||"구조"});
+  if(!sub.trim())add("제목이 없습니다","제목 없는 메일은 열리지 않거나 스팸으로 갑니다");
+  else{
+    if(sub.trim().length>40)add("제목이 깁니다 ("+sub.trim().length+"자)","메일함에서 뒤가 잘립니다. 30자 안쪽을 권합니다");
+    if(!/^\s*\[/.test(sub))add("제목 앞에 회사명이 없습니다","[광전기통신] 처럼 앞에 달면 상대 메일함에서 바로 찾힙니다");
+    if(/^(안녕|인사|문의|요청|견적)\s*$/.test(sub.trim()))add("제목이 막연합니다","무엇에 대한 것인지 현장명·품목을 넣으세요");
+  }
+  if(!body.trim())add("본문이 없습니다","");
+  else{
+    if(!/님|귀하|대표|과장|부장|소장|팀장/.test(body.split("\n")[0]||""))
+      add("첫 줄에 받는 분 호칭이 없습니다","‘OOO님 안녕하십니까’ 로 시작하면 읽는 사람이 편합니다");
+    if(!/안녕|인사|수고|반갑/.test(body))add("인사말이 없습니다","용건부터 시작하면 차갑게 읽힙니다");
+    if(!/감사합니다|감사드립니다|부탁드립니다|드림/.test(body))
+      add("맺음말이 없습니다","‘감사합니다’ 한 줄로 끝맺으세요");
+    if(!/\n\s*\n/.test(body))add("문단이 나뉘어 있지 않습니다","3~4줄마다 한 줄 띄우면 훨씬 읽힙니다");
+    if(/ㅋㅋ|ㅎㅎ|ㅠㅠ|😊|👍|^ㅇㅇ/m.test(body))add("카톡 말투가 섞였습니다","메일에서는 빼는 편이 안전합니다","말투");
+    const yo=(body.match(/(해요|돼요|되요|예요|이에요|세요|어요|아요|네요|지요|구요|까요)(?=[\s.!?,)\]]|$)/g)||[]).length;
+    if(yo>=2)add("‘~요’ 말끝이 "+yo+"곳 있습니다","메일은 ‘~합니다’ 가 기본입니다","말투");
+    if(/첨부/.test(body))add("첨부를 말씀하셨습니다","보내기 전에 파일이 실제로 붙었는지 확인하세요","확인");
+    if(/금일|명일|익일|귀하의/.test(body))add("딱딱한 한자어가 있습니다","오늘·내일·다음 날 로 바꾸면 오해가 없습니다","말투");
+  }
+  if(!sig.trim())add("서명이 없습니다","이름·회사·연락처를 넣어 두면 매번 안 쓰셔도 됩니다");
+  return out;
+}
+function tDrawMail(){
+  const m=TS.mail||{};
+  const set=(id,v)=>{const e=$(id);if(e&&document.activeElement!==e)e.value=v||"";};
+  set("#tMSubj",m.s); set("#tMBody",m.b); set("#tMSig",m.sig);
+  $("#tMailNote").textContent=(m.b||"").length?`본문 ${(m.b||"").length}자`:"";
+  $("#tMTpls").innerHTML=TMAIL.map(([t,sub,body],i)=>
+    `<div class="tcard"><div class="w" style="font-size:15px">${esc(t)}</div>`
+    +`<p class="use" style="font-family:var(--mono);font-size:12px">${esc(tFillTpl(sub))}</p>`
+    +`<div class="act"><button data-tmail="${i}">이 틀로 쓰기</button></div></div>`).join("");
+}
+function tDrawMailFix(){
+  const fs=tMailCheck();
+  if(!fs.length){
+    $("#tMFixes").innerHTML=`<div class="tok">메일 형식이 잘 갖춰졌습니다. 이대로 보내셔도 좋습니다.</div>`;
+    return;
+  }
+  $("#tMFixes").innerHTML=`<div class="shd" style="margin:0 0 8px"><h2 style="cursor:default">살펴볼 곳 ${fs.length}</h2>`
+    +`<span class="note">메일은 형식이 신뢰를 만듭니다</span></div>`
+    +fs.map(f=>`<div class="tfix ${f.k==="말투"?"tone":f.k==="확인"?"word":""}">`
+    +`<div class="l1">${esc(f.t)} <span style="font-size:11.5px;color:var(--ink-3)">${esc(f.k)}</span></div>`
+    +(f.w?`<div class="l2">${esc(f.w)}</div>`:"")+`</div>`).join("");
+}
+/* ── B · AI 에게 물어보기 ── */
+function tAsk(kind){
+  const spec=TASK[kind]; if(!spec)return;
+  let body="";
+  if(kind==="read")body=$("#tRText").value;
+  else if(kind==="mail"||kind==="subj"){
+    const m=tMailGet();
+    body=(kind==="mail"&&m.s?`제목 : ${m.s}\n\n`:"")+m.b+(m.sig?`\n\n${m.sig}`:"");
+  }
+  else body=$("#tText").value;
+  if(!body.trim()){toast("먼저 내용을 넣어 주세요",true);return;}
+  const text=spec[1]+"\n\n---\n"+body.trim();
+  TS.ai=(TS.ai||0)+1; tSave();
+  $("#taskTitle").textContent=spec[0];
+  $("#taskText").value=text;
+  $("#taskCnt").textContent=`지금까지 ${TS.ai}번 물어보셨습니다`;
+  $("#taskm").hidden=false;
+  tCopy(text);
+}
 /* ── T8 말로 받아쓰기 ── */
 let tRec=null;
 function tMic(){
@@ -4862,6 +5066,34 @@ document.addEventListener("click",ev=>{
     TS.draft=el.value; tSave(); $("#tTonePrev").innerHTML=""; tTone=null; tDrawFix(1);
     toast("한 줄 붙였습니다"); return;}
   if(t.id==="tMic"){tMic();return;}
+  if(t.id==="tAskFix"){tAsk("fix");return;}
+  if(d.task){tAsk(d.task);return;}
+  if(d.tclose){$("#"+d.tclose).hidden=true;return;}
+  if(t.id==="taskCopy"){tCopy($("#taskText").value);return;}
+  if(t.id==="taskOpen"){
+    try{window.open("https://claude.ai/new","_blank","noopener");}
+    catch(e){toast("claude.ai 를 직접 열어 붙여넣으세요",true);}
+    return;}
+  if(t.id==="tMCheck"){tMailSave();tDrawMailFix();return;}
+  if(t.id==="tMCopy"){
+    const m=tMailGet();
+    tCopy((m.s?m.s+"\n\n":"")+m.b+(m.sig?"\n\n"+m.sig:""));return;}
+  if(t.id==="tMWipe"){
+    if(!confirm("메일 제목과 본문을 지울까요? 서명은 남습니다."))return;
+    $("#tMSubj").value="";$("#tMBody").value="";tMailSave();
+    $("#tMFixes").innerHTML="";tDrawMail();return;}
+  if(t.id==="tMSigAdd"){
+    const m=tMailGet();
+    if(!m.sig.trim()){toast("서명을 먼저 쓰세요",true);$("#tMSig").focus();return;}
+    if(m.b.indexOf(m.sig.trim())>=0){toast("이미 붙어 있습니다",true);return;}
+    $("#tMBody").value=m.b.replace(/\s+$/,"")+"\n\n"+m.sig.trim();
+    tMailSave();tDrawMail();toast("서명을 붙였습니다");return;}
+  if(d.tmail!=null){
+    const[,sub,body]=TMAIL[+d.tmail];
+    $("#tMSubj").value=tFillTpl(sub);
+    $("#tMBody").value=tFillTpl(body)+((TS.mail&&TS.mail.sig)?"\n\n"+TS.mail.sig:"");
+    tMailSave();tDrawMail();$("#tMFixes").innerHTML="";
+    window.scrollTo(0,0);toast("메일 틀을 넣었습니다 — 빈칸을 채우세요");return;}
   if(t.id==="tRGo"){TS.read=$("#tRText").value;tSave();tDrawRead();return;}
   if(t.id==="tRWipe"){$("#tRText").value="";TS.read="";tSave();tDrawRead();return;}
   if(t.id==="tHClear"){tHQ="";$("#tHQ").value="";tDrawHan();$("#tHQ").focus();return;}
@@ -4891,6 +5123,10 @@ document.addEventListener("click",ev=>{
       +"[말투 바꾸기] 쓴 문장을 격식 있게·부드럽게·짧게·위트 있게 바꿔 보여 줍니다.\n"
       +"  ‘위트 있게’ 는 끝에 붙일 만한 한 줄도 같이 골라 줍니다.\n\n"
       +"[🎤 말로] 운전 중이면 말로 받아쓰세요. (아이폰 사파리는 키보드의 마이크를 쓰세요)\n\n"
+      +"[메일 쓰기] 제목·본문·서명을 갖춰 씁니다. 메일 틀 12종.\n"
+      +"  ‘메일 점검’ 은 카톡과 다른 기준으로 봅니다 — 제목, 인사말, 문단 나눔, 맺음말, 서명.\n\n"
+      +"[🤖 AI에게 물어보기] 물어볼 글을 통째로 복사해 줍니다.\n"
+      +"  Claude 앱에 붙여넣기만 하면 되고, 쓰고 계신 구독 안이라 돈이 따로 안 나갑니다.\n\n"
       +"[받은 말] 고객이 보낸 애매한 말의 속뜻과 답변 예시를 보여 줍니다.\n\n"
       +"[한자어] 공문에 나오는 어려운 말의 쉬운 뜻.\n\n"
       +"[내 표현] 사전에 없는 말을 직접 넣어 두면 계속 남습니다.");
@@ -4902,6 +5138,10 @@ document.addEventListener("input",ev=>{
   if(id==="tQ"){tQ=v;tDrawFind();return;}
   if(id==="tHQ"){tHQ=v;tDrawHan();return;}
   if(id==="tRText"){TS.read=v;tSave();return;}
+  if(id==="tMSubj"||id==="tMBody"||id==="tMSig"){
+    tMailSave();
+    $("#tMailNote").textContent=$("#tMBody").value.length?`본문 ${$("#tMBody").value.length}자`:"";
+    return;}
   if(id==="tText"){TS.draft=v;tSave();$("#tLen").textContent=v.length?`${v.length}자`:"";return;}
   const vk={tvSite:"site",tvName:"name",tvItem:"item",tvDate:"date",tvMe:"me"};
   if(vk[id]){TS.v=TS.v||{};TS.v[vk[id]]=v;tSave();tDrawTpl();return;}

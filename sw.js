@@ -1,5 +1,5 @@
 /* 함 제작도면 작성기 — 오프라인 캐시 (빌드가 버전을 갱신합니다) */
-const V = "hamdo-c8b92893";
+const V = "hamdo-ffeecd4d";
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon-180.png", "./icon-512.png"];
 const EXT = [
   "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
