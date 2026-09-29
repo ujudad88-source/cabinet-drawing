@@ -255,6 +255,16 @@ body.in-app #home,body.in-app #rack,body.in-app #talk,body.in-app #bend{display:
 .bstat dd small{font-size:11px;font-weight:400;color:var(--ink-3)}
 .bcut{background:#fff;border:1px solid var(--line-2);border-radius:var(--r-s);overflow:hidden}
 .bcut svg{display:block;width:100%;height:auto}
+.bhole{display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid var(--line-2);
+  border-left:3px solid #2b6cb0;border-radius:var(--r-s);background:var(--panel-2);margin-bottom:5px;
+  flex-wrap:wrap}
+.bhole select,.bhole input{font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--line);
+  border-radius:6px;background:var(--panel);color:var(--ink);min-width:0;width:100%}
+.bhole input{font-family:var(--mono)}
+.bhole .c{flex:1;min-width:58px;display:flex;flex-direction:column;gap:2px}
+.bhole .c label{font-size:10px;color:var(--ink-3)}
+.bhole button{font:inherit;font-size:12px;padding:3px 7px;border:1px solid var(--line);
+  border-radius:6px;background:var(--panel);color:var(--danger);cursor:pointer;flex:none}
 .bpath{display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid var(--line-2);
   border-left:3px solid var(--blue,#2b6cb0);border-radius:var(--r-s);background:var(--panel-2);margin-bottom:5px}
 .bpath .n{font-family:var(--mono);font-size:11px;color:var(--ink-3);width:18px;flex:none}
@@ -533,9 +543,22 @@ body.in-app #home,body.in-app #rack,body.in-app #talk,body.in-app #bend{display:
       <button class="chip add" id="bPathAdd">+ 구간 추가</button>
       <button class="chip add" id="bPathClose">닫힌 단면으로</button>
       <button class="chip add" id="bPathFlip">방향 뒤집기</button>
+      <button class="chip add" id="bPathRoll">굴림 (곡면)</button>
     </div>
     <p class="note" style="font-size:11.5px;color:var(--ink-3);margin-top:9px">
       길이만큼 가고 각도만큼 꺾습니다. <b>▲</b> 는 위로, <b>▼</b> 는 아래로 접는 것입니다.</p>
+  </section>
+
+  <section id="bHoleBox">
+    <div class="shd"><h2 data-fold="bhole">타공</h2><span class="note" id="bHoleNote"></span></div>
+    <div class="chips" id="bHoleAdd">
+      <button class="chip add" data-bhadd="round">+ 원형</button>
+      <button class="chip add" data-bhadd="slot">+ 장공</button>
+      <button class="chip add" data-bhadd="rect">+ 사각</button>
+      <button class="chip add" data-bhadd="stud">+ 스터드</button>
+      <button class="chip add" data-bhadd="row">+ 4개 모서리</button>
+    </div>
+    <div id="bHoles" style="margin-top:10px"></div>
   </section>
 
   <section id="bWeldBox">
@@ -6478,6 +6501,7 @@ const BSHAPE=[
  ["평판",300,200,[0,0,90,0],[0,0,90,0],[0,0,90,0],[0,0,90,0]]
 ];
 const BSIDEN=["뒤","앞","좌","우"];
+const BHT={round:"원형",slot:"장공",rect:"사각",stud:"스터드볼트"};
 /* 자유 접기 모양 — [이름, 폭, [[길이,다음 꺾임 각도], …]] */
 const BFREE=[
  ["ㄷ 형",200,[[60,90],[200,90],[60,0]]],
@@ -6495,7 +6519,7 @@ const BMSG=["이렇게 만들어 달란 말씀이시죠?","이 모양으로 진�
 function newBPart(nm){
   return{id:uid(),name:nm||"부재 1",mat:0,ti:3,qty:1,col:0,mode:"box",
     w:300,d:200,sides:[[1,60,90,0],[1,60,90,0],[1,60,90,0],[1,60,90,0]],
-    path:[[80,90],[200,90],[80,0]],pw:200,
+    path:[[80,90],[200,90],[80,0]],pw:200,holes:[],
     ox:0,oy:0,oz:0,rz:0,up:0,weld:""};
 }
 let BS={cust:"",title:"",msg:BMSG[0],parts:[newBPart()],cur:0,revs:[]};
@@ -6518,7 +6542,7 @@ function bLoad(){
   try{const v=JSON.parse(localStorage.getItem(BLS)||"null");
     if(v&&v.parts&&v.parts.length){BS=v;BS.revs=BS.revs||[];
       BS.parts.forEach(p=>{p.sides=p.sides||[[1,60,90,0],[1,60,90,0],[1,60,90,0],[1,60,90,0]];
-        p.path=p.path||[[80,90],[200,90],[80,0]];if(!p.mode)p.mode="box";});}
+        p.path=p.path||[[80,90],[200,90],[80,0]];p.holes=p.holes||[];if(!p.mode)p.mode="box";});}
   }catch(e){}
 }
 function bPush(){
@@ -6573,6 +6597,42 @@ function bFaces(p,f){
     }
   });
   return F;
+}
+/* 타공을 놓을 수 있는 면 — [면키, 이름, 가로크기, 세로크기] */
+function bFaceList(p){
+  if(p.mode==="free")
+    return (p.path||[]).map((sg,i)=>[i,`${i+1}번 구간`,Math.max(1,num(p.pw,200)),Math.max(1,num(sg[0],0))])
+      .filter(x=>x[3]>0);
+  const W=Math.max(1,num(p.w,300)), D=Math.max(1,num(p.d,200));
+  const out=[[-1,"바닥",W,D]];
+  (p.sides||[]).forEach((sd,i)=>{
+    if(!sd||!sd[0])return;
+    const h=Math.max(0,num(sd[1],0)); if(h<=0)return;
+    out.push([i,BSIDEN[i]+"면",i<2?W:D,h]);
+  });
+  return out;
+}
+function bFaceSize(p,k){
+  const f=bFaceList(p).find(x=>x[0]===+k);
+  return f?{w:f[2],h:f[3],n:f[1]}:{w:100,h:100,n:"?"};
+}
+/* 구멍 하나의 테두리를 면 좌표(0~가로, 0~세로)에서 점으로 */
+function bHoleOutline(h){
+  const t=h.t||"round", pts=[];
+  const cx=num(h.x,0), cy=num(h.y,0);
+  if(t==="round"||t==="stud"){
+    const r=Math.max(.5,num(h.d,10)/2);
+    for(let i=0;i<24;i++){const a=i/24*Math.PI*2;pts.push([cx+r*Math.cos(a),cy+r*Math.sin(a)]);}
+  }else if(t==="rect"){
+    const w=Math.max(1,num(h.w,20))/2, hh=Math.max(1,num(h.h,12))/2;
+    pts.push([cx-w,cy-hh],[cx+w,cy-hh],[cx+w,cy+hh],[cx-w,cy+hh]);
+  }else{                                          /* 장공 — 양 끝이 둥글다 */
+    const w=Math.max(1,num(h.w,25)), hh=Math.max(1,num(h.h,10));
+    const r=hh/2, L=Math.max(0,w-hh)/2;
+    for(let i=0;i<=12;i++){const a=-Math.PI/2+i/12*Math.PI;pts.push([cx+L+r*Math.cos(a),cy+r*Math.sin(a)]);}
+    for(let i=0;i<=12;i++){const a=Math.PI/2+i/12*Math.PI;pts.push([cx-L+r*Math.cos(a),cy+r*Math.sin(a)]);}
+  }
+  return pts;
 }
 /* 부재를 조립 위치로 옮긴다 (2번째 부재부터) */
 function bPlace(F,p){
@@ -6642,7 +6702,7 @@ function bDraw(cv,W,H,opt){
     const dep=(q[0][2]+q[1][2]+q[2][2]+q[3][2])/4;
     const n=bNorm(fc.p);
     const br=0.52+0.48*Math.abs(n[0]*lit[0]+n[1]*lit[1]+n[2]*lit[2]);
-    return{q,dep,br,pi:fc.pi};
+    return{q,dep,br,pi:fc.pi,k:fc.k,raw:fc.p};
   }).sort((a,b)=>b.dep-a.dep);
   list.forEach(fc=>{
     const P=BS.parts[fc.pi]||BS.parts[0];
@@ -6655,6 +6715,24 @@ function bDraw(cv,W,H,opt){
     cx.strokeStyle=bShade(edge,0.75);
     cx.lineWidth=opt.lw||1.2; cx.lineJoin="round";
     cx.stroke();
+    /* 그 면에 뚫린 구멍 */
+    (P.holes||[]).filter(h=>+h.f===fc.k).forEach(h=>{
+      const sz=bFaceSize(P,h.f);
+      const o=fc.raw[0], U=fc.raw[1], V=fc.raw[3];
+      const map=(ux,vy)=>{
+        const a=ux/sz.w, b=vy/sz.h;
+        return bProj([o[0]+(U[0]-o[0])*a+(V[0]-o[0])*b,
+                      o[1]+(U[1]-o[1])*a+(V[1]-o[1])*b,
+                      o[2]+(U[2]-o[2])*a+(V[2]-o[2])*b],S,ox,oy,B.c);
+      };
+      const pts=bHoleOutline(h).map(([a,b])=>map(a,b));
+      cx.beginPath();
+      pts.forEach((p,i)=>i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]));
+      cx.closePath();
+      cx.fillStyle=h.t==="stud"?bShade(edge,0.55):"#2a3138";
+      cx.fill();
+      cx.strokeStyle=bShade(edge,0.5); cx.lineWidth=(opt.lw||1.2)*0.7; cx.stroke();
+    });
   });
   if(opt.dim)bDrawDim(cx,B,S,ox,oy,opt);
   cx.restore();
@@ -6803,6 +6881,15 @@ function bFlatSVG(p,W,H){
       +`font-family="${FF}" fill="#c8500a" text-anchor="middle"`
       +(rot?` transform="rotate(-90 ${x.toFixed(1)} ${(y-1.6*k).toFixed(1)})"`:"")+`>${esc(t)}</text>`);
   });
+  /* 타공을 전개 자리로 옮겨 그린다 */
+  (p.holes||[]).forEach(h=>{
+    const sz=bFaceSize(p,h.f);
+    const pos=bHoleFlat(p,h,f);
+    if(!pos)return;
+    const pts=bHoleOutline(h).map(([a,b])=>pos(a,b));
+    o.push(`<polygon points="${pts.map(q=>q[0].toFixed(1)+","+q[1].toFixed(1)).join(" ")}" `
+      +`fill="none" stroke="${INK}" stroke-width="${(0.7*k).toFixed(2)}"/>`);
+  });
   o.push(dimH(0,f.w,-9*k,0,k));
   o.push(dimV(0,f.h,-9*k,0,k));
   o.push(tx(f.w/2,f.h+11*k,`${esc(p.name)} · ${bMat(p)[0]} ${bTh(p).toFixed(1)}T · ${Math.max(1,num(p.qty,1))}장`,3.4*k,"middle"));
@@ -6865,6 +6952,30 @@ function bNestSVG(){
     +`preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%">`
     +`<rect x="-40" y="-60" width="${(vw+40).toFixed(0)}" height="${(vh+60).toFixed(0)}" fill="#ffffff"/>`
     +o.join("")+`</svg>`;
+}
+/* 면 좌표 → 전개도 좌표 */
+function bHoleFlat(p,h,f){
+  const sz=bFaceSize(p,h.f), bd=bBd(p), k=+h.f;
+  if(p.mode==="free"){
+    const L=bPathFlat(p);
+    let y0=0;
+    for(let i=0;i<k;i++)y0+=L.segs[i]||0;
+    return(a,b)=>[a,y0+b];
+  }
+  const S=p.sides||[];
+  const add=(i)=>{
+    const sd=S[i]; if(!sd||!sd[0])return 0;
+    const hh=Math.max(0,num(sd[1],0)); if(hh<=0)return 0;
+    const hem=Math.max(0,num(sd[3],0));
+    return hh+hem-bd-(hem>0?bd:0);
+  };
+  const a0=add(0),a1=add(1),a2=add(2),a3=add(3);
+  if(k===-1)return(a,b)=>[a2+a,a0+b];
+  if(k===0)return(a,b)=>[a2+a,a0-b];
+  if(k===1)return(a,b)=>[a2+a,a0+Math.max(1,num(p.d,200))+b];
+  if(k===2)return(a,b)=>[a2-b,a0+a];
+  if(k===3)return(a,b)=>[a2+Math.max(1,num(p.w,300))+b,a0+a];
+  return null;
 }
 /* ── 자유 접기 단면 미리보기 ── */
 function bCutSVG(p){
@@ -7028,6 +7139,29 @@ function bRender(){
     +`<button class="tg" data-bpins="${i}" title="아래에 구간 끼우기">＋</button>`
     +((p.path||[]).length>1?`<button data-bpdel="${i}">✕</button>`:"")+`</div>`;
   }).join("");
+  /* 타공 */
+  const fl=bFaceList(p);
+  $("#bHoleNote").textContent=`${(p.holes||[]).length}개`;
+  $("#bHoles").innerHTML=(p.holes||[]).length?(p.holes||[]).map((h,i)=>{
+    const sz=bFaceSize(p,h.f), t=h.t||"round";
+    return `<div class="bhole">`
+    +`<span class="c" style="flex:1.3"><label>면</label><select data-bhf="${i}">`
+    +fl.map(x=>`<option value="${x[0]}"${+h.f===x[0]?" selected":""}>${x[1]}</option>`).join("")
+    +`</select></span>`
+    +`<span class="c" style="flex:1.2"><label>종류</label><select data-bht="${i}">`
+    +Object.keys(BHT).map(kk=>`<option value="${kk}"${t===kk?" selected":""}>${BHT[kk]}</option>`).join("")
+    +`</select></span>`
+    +`<span class="c"><label>가로 위치</label><input type="number" data-bhv="${i},x" value="${num(h.x,0)}" inputmode="numeric"></span>`
+    +`<span class="c"><label>세로 위치</label><input type="number" data-bhv="${i},y" value="${num(h.y,0)}" inputmode="numeric"></span>`
+    +(t==="round"||t==="stud"
+      ?`<span class="c"><label>지름</label><input type="number" data-bhv="${i},d" value="${num(h.d,10)}" inputmode="numeric"></span>`
+      :`<span class="c"><label>가로</label><input type="number" data-bhv="${i},w" value="${num(h.w,25)}" inputmode="numeric"></span>`
+       +`<span class="c"><label>세로</label><input type="number" data-bhv="${i},h" value="${num(h.h,10)}" inputmode="numeric"></span>`)
+    +`<button data-bhdel="${i}" title="지우기">✕</button>`
+    +`<span style="font-size:10.5px;color:var(--ink-3);width:100%">${esc(sz.n)} ${R(sz.w)}×${R(sz.h)} 안에서</span>`
+    +`</div>`;
+  }).join("")
+  :`<p class="note" style="font-size:12.5px;color:var(--ink-3);margin:0">위 버튼으로 구멍을 넣습니다. 면을 고르고 그 면 왼쪽 위에서 잰 위치를 넣으세요.</p>`;
   /* 조립 */
   $("#bWeldBox").hidden=BS.parts.length<2;
   if(BS.parts.length>1){
@@ -7182,6 +7316,29 @@ document.addEventListener("click",ev=>{
     bPush();(p.path||[]).forEach(sg=>{sg[1]=-num(sg[1],0);});
     bSave();bRender();toast("접는 방향을 뒤집었습니다");return;}
   if(t.id==="bPathAdd"){bPush();p.path.push([80,90]);bSave();bRender();return;}
+  if(t.id==="bPathRoll"){
+    const R0=num(prompt("굴림 반경 R (mm)","40"),0), A=num(prompt("굴림 각도 (도)","180"),0);
+    if(R0<=0||A===0)return;
+    const N=Math.max(4,Math.min(24,Math.round(Math.abs(A)/15)));
+    const seg=Math.abs(R0*A*Math.PI/180)/N, st=A/N;
+    bPush();
+    for(let i=0;i<N;i++)p.path.push([Math.round(seg*10)/10,Math.round(st)]);
+    bSave();bRender();toast(`반경 ${R0} · ${A}° 굴림을 ${N}구간으로 넣었습니다`);return;}
+  if(d.bhadd){
+    bPush();
+    const fl=bFaceList(p), f0=fl.length?fl[0][0]:-1, sz=bFaceSize(p,f0);
+    p.holes=p.holes||[];
+    if(d.bhadd==="row"){
+      const m=Math.min(20,Math.round(Math.min(sz.w,sz.h)*0.12));
+      [[m,m],[sz.w-m,m],[sz.w-m,sz.h-m],[m,sz.h-m]].forEach(([x,y])=>
+        p.holes.push({id:uid(),f:f0,t:"round",x:Math.round(x),y:Math.round(y),d:7}));
+      toast("네 모서리에 구멍을 넣었습니다");
+    }else{
+      p.holes.push({id:uid(),f:f0,t:d.bhadd,
+        x:Math.round(sz.w/2),y:Math.round(sz.h/2),d:10,w:25,h:10});
+    }
+    bSave();bRender();return;}
+  if(d.bhdel!=null){bPush();p.holes.splice(+d.bhdel,1);bSave();bRender();return;}
   if(d.bmsg!=null){BS.msg=BMSG[+d.bmsg];bSave();bRender();return;}
   if(t.id==="bZIn"){bZoom=Math.min(4,bZoom*1.25);$("#bZVal").textContent=Math.round(bZoom*100)+"%";bDrawView();return;}
   if(t.id==="bZOut"){bZoom=Math.max(.4,bZoom/1.25);$("#bZVal").textContent=Math.round(bZoom*100)+"%";bDrawView();return;}
@@ -7240,7 +7397,11 @@ document.addEventListener("click",ev=>{
       +"   단면 모양 8종(ㄷ·Z·계단·물받이·U·모자·헴·각관)을 누르면 채워집니다\n"
       +"   ▲ 는 위로, ▼ 는 아래로 접는 것입니다. ＋ 로 사이에 구간을 끼웁니다\n"
       +"   ‘닫힌 단면으로’ 는 각관처럼 끝이 처음에 닿게 각도를 맞춰 줍니다\n"
-      +"5. 부재를 추가해 용접으로 붙일 수 있습니다\n\n"
+      +"5. 부재를 추가해 용접으로 붙일 수 있습니다\n"
+      +"6. [타공] 면을 고르고 그 면 왼쪽 위에서 잰 위치를 넣습니다\n"
+      +"   원형 · 장공 · 사각 · 스터드볼트. ‘4개 모서리’ 는 한 번에 네 개\n"
+      +"   3D 와 전개도에 함께 나옵니다\n"
+      +"7. 자유 접기의 ‘굴림’ 은 반경과 각도를 주면 여러 번 조금씩 접어 곡면을 만듭니다\n\n"
       +"[확인용 그림] 발주처에 보낼 그림입니다. 치수 세 개와 문구만 들어갑니다\n"
       +"[전개도] 공장용입니다. 파선이 접는 선, ▲ 가 접는 각도입니다\n"
       +"[판재 배치] 정척에서 몇 장 나오는지 봅니다");
@@ -7274,6 +7435,9 @@ document.addEventListener("input",ev=>{
   if($("#bend").hidden)return;
   const id=ev.target.id, v=ev.target.value, d=ev.target.dataset||{}, p=bp();
   if(d.bsv){const[i,k]=d.bsv.split(",").map(Number);p.sides[i][k]=num(v,0);bSave();bRedrawAll();return;}
+  if(d.bhv){
+    const[i,k]=d.bhv.split(",");
+    p.holes[+i][k]=num(v,0);bSave();bRedrawAll();return;}
   if(d.bpv){
     const[i,k]=d.bpv.split(",").map(Number);
     if(k===1){const sg=num(p.path[i][1],0);p.path[i][1]=(sg<0?-1:1)*Math.abs(num(v,0));}
@@ -7293,6 +7457,9 @@ document.addEventListener("input",ev=>{
 document.addEventListener("change",ev=>{
   if($("#bend").hidden)return;
   const id=ev.target.id, p=bp();
+  const dd=ev.target.dataset||{};
+  if(dd.bhf!=null){bPush();p.holes[+dd.bhf].f=+ev.target.value;bSave();bRender();return;}
+  if(dd.bht!=null){bPush();p.holes[+dd.bht].t=ev.target.value;bSave();bRender();return;}
   if(id==="bMat"){bPush();p.mat=+ev.target.value;bSave();bRender();return;}
   if(id==="bT"){bPush();p.ti=+ev.target.value;bSave();bRender();return;}
 });
