@@ -522,6 +522,7 @@ body.in-app #home,body.in-app #rack,body.in-app #talk,body.in-app #bend{display:
       <button class="btn gho ib" id="bPlay" title="접히는 모습 보기">▶<span class="lbl"> 접기</span></button>
       <button class="btn gho ib" id="bFs" title="크게 보기" aria-label="크게 보기"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
       <button class="btn gho ib" id="bUndo" disabled title="되돌리기" aria-label="되돌리기"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a5 5 0 0 1 0 10h-3"/></svg><span class="lbl">되돌리기</span></button>
+      <button class="btn gho ib" id="bRedo" disabled title="다시하기" aria-label="다시하기"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a5 5 0 0 0 0 10h3"/></svg><span class="lbl">다시하기</span></button>
       <button class="btn gho ib" id="bReset" title="처음 상태로" aria-label="초기화"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9.5 12.5 14 17M14 12.5 9.5 17"/></svg><span class="lbl">초기화</span></button>
     </div>
     <div class="bstage" id="bStage"><canvas id="bview"></canvas>
@@ -6611,7 +6612,8 @@ function newBPart(nm){
     ox:0,oy:0,oz:0,rz:0,up:0,weld:""};
 }
 let BS={cust:"",title:"",msg:BMSG[0],parts:[newBPart()],cur:0,revs:[]};
-let bView="fold", bRot={y:-0.62,x:0.5}, bZoom=1, bFold=1, bHist=[], bSaveT=0, bAnim=0;
+let bView="fold", bRot={y:-0.62,x:0.5}, bZoom=1, bFold=1, bHist=[], bRedoS=[], bSaveT=0, bAnim=0;
+let bPan={x:0,y:0};
 function bp(){return BS.parts[Math.min(BS.cur,BS.parts.length-1)]||BS.parts[0];}
 function bTh(p){return BTH[Math.min(BTH.length-1,Math.max(0,num(p.ti,3)))];}
 function bBd(p){return BBD[Math.min(BBD.length-1,Math.max(0,num(p.ti,3)))];}
@@ -6635,14 +6637,29 @@ function bLoad(){
 }
 function bPush(){
   bHist.push(JSON.stringify(BS));
-  if(bHist.length>30)bHist.shift();
-  const b=$("#bUndo"); if(b)b.disabled=false;
+  if(bHist.length>40)bHist.shift();
+  bRedoS=[];
+  bStepBtns();
+}
+function bStepBtns(){
+  const u=$("#bUndo"), r=$("#bRedo");
+  if(u){u.disabled=!bHist.length;
+    const l=u.querySelector(".lbl"); if(l)l.textContent=bHist.length?` 되돌리기 ${bHist.length}`:" 되돌리기";
+    u.title=bHist.length?`되돌리기 (${bHist.length}번 남음)`:"되돌릴 것이 없습니다";}
+  if(r){r.disabled=!bRedoS.length;
+    const l=r.querySelector(".lbl"); if(l)l.textContent=bRedoS.length?` 다시하기 ${bRedoS.length}`:" 다시하기";}
 }
 function bUndo(){
-  if(!bHist.length)return;
+  if(!bHist.length){toast("되돌릴 것이 없습니다",true);return;}
+  bRedoS.push(JSON.stringify(BS));
   try{BS=JSON.parse(bHist.pop());}catch(e){return;}
-  const b=$("#bUndo"); if(b)b.disabled=!bHist.length;
-  bSave(); bRender(); toast("되돌렸습니다");
+  bSave(); bRender(); toast(`되돌렸습니다 · 다시하기로 되살릴 수 있습니다`);
+}
+function bRedoGo(){
+  if(!bRedoS.length){toast("다시할 것이 없습니다",true);return;}
+  bHist.push(JSON.stringify(BS));
+  try{BS=JSON.parse(bRedoS.pop());}catch(e){return;}
+  bSave(); bRender(); toast("다시했습니다");
 }
 
 /* ══════════ 모양 만들기 ══════════
@@ -6783,7 +6800,7 @@ function bDraw(cv,W,H,opt){
   const F=bAllFaces(bFold);
   const B=bBounds(F);
   const S=Math.min(W,H)*(opt.fit||0.30)/B.s*bZoom*(opt.zoom||1);
-  const ox=W/2, oy=H*(opt.oy||0.52);
+  const ox=W/2+(opt.pan?bPan.x:0), oy=H*(opt.oy||0.52)+(opt.pan?bPan.y:0);
   const lit=[0.42,-0.55,0.72];
   const list=F.map(fc=>{
     const q=fc.p.map(pt=>bProj(pt,S,ox,oy,B.c));
@@ -6861,7 +6878,7 @@ function bRedraw(){
   }
   const cx=cv.getContext("2d");
   cx.setTransform(dpr,0,0,dpr,0,0);
-  bDraw(cv,W,H,{dim:1,dimSize:Math.max(13,Math.round(W/26))});
+  bDraw(cv,W,H,{dim:1,pan:1,dimSize:Math.max(13,Math.round(W/26))});
 }
 
 /* ══════════ 전개 · 산출 ══════════ */
@@ -7248,6 +7265,8 @@ function bRender(){
       :`<button class="tg" data-bpdir="${i}" title="접는 방향">${a>=0?"▲":"▼"}</button>`
        +`<span class="f2" style="flex:1"><label style="font-size:10px;color:var(--ink-3)">꺾는 각도</label>`
        +`<input type="number" data-bpv="${i},1" value="${Math.abs(a)}" inputmode="numeric"></span>`)
+    +(i>0?`<button class="tg" data-bpmv="${i},-1" title="위로">▲</button>`:"")
+    +(last?"":`<button class="tg" data-bpmv="${i},1" title="아래로">▼</button>`)
     +`<button class="tg" data-bpins="${i}" title="아래에 구간 끼우기">＋</button>`
     +((p.path||[]).length>1?`<button data-bpdel="${i}">✕</button>`:"")+`</div>`;
   }).join("");
@@ -7312,9 +7331,10 @@ function bRender(){
       +`<button data-brevdel="${i}" style="color:var(--danger)">지우기</button></div></div>`).join("")
     : `<p class="note" style="font-size:12.5px;color:var(--ink-3);margin:0">확인용 그림을 만든 뒤 <b>보낸 기록에 남기기</b>를 누르면 여기에 쌓입니다.</p>`;
   $("#bPages").textContent=BTABS.find(t=>t[0]===bView)[1];
+  bStepBtns();
   $("#bScale").textContent=`${c.W}×${c.D}×${c.H} · ${c.kg.toFixed(2)}kg`;
   $("#bFoldRow").hidden=bView!=="fold";
-  $("#bHint").textContent=bView==="fold"?"끌어서 돌리기":bView==="flat"?"파선이 접는 선입니다":"";
+  $("#bHint").textContent=bView==="fold"?"끌어서 돌리기 · 두 손가락으로 확대·이동":bView==="flat"?"파선이 접는 선입니다":"";
   bDrawView();
 }
 function bDrawView(){
@@ -7416,6 +7436,24 @@ const BHELPSVG={
    <path d="M0 0 L7 3.5 L0 7 z" fill="currentColor"/></marker></defs>
    <g fill="currentColor" font-size="9" font-family="sans-serif" text-anchor="middle">
    <text x="272" y="52">카톡</text></g></svg>`,
+ undo:`<svg viewBox="0 0 300 120">
+   <g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+   <path d="M95 62 L70 40 L95 18"/><path d="M70 40 H150 a26 26 0 0 1 0 52 h-16"/></g>
+   <g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity=".45">
+   <path d="M205 62 L230 40 L205 18"/><path d="M230 40 H150"/></g>
+   <g fill="currentColor" font-size="12" font-family="sans-serif" text-anchor="middle">
+   <text x="95" y="112">되돌리기</text><text x="215" y="112">다시하기</text></g></svg>`,
+ free:`<svg viewBox="0 0 300 120">
+   <g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+   <path d="M40 95 L40 55 L120 55 L120 25 L200 25 L200 65 L260 65"/></g>
+   <g fill="currentColor"><circle cx="40" cy="95" r="4"/><circle cx="40" cy="55" r="4"/>
+   <circle cx="120" cy="55" r="4"/><circle cx="120" cy="25" r="4"/><circle cx="200" cy="25" r="4"/>
+   <circle cx="200" cy="65" r="4"/></g>
+   <g fill="currentColor" font-size="10" font-family="sans-serif" text-anchor="middle">
+   <text x="28" y="78">40</text><text x="80" y="48">80</text><text x="108" y="42">30</text>
+   <text x="160" y="18">80</text><text x="212" y="48">40</text><text x="230" y="58">60</text></g>
+   <g fill="currentColor" font-size="11" font-family="sans-serif" text-anchor="middle">
+   <text x="150" y="112">길이만큼 가고 각도만큼 꺾습니다</text></g></svg>`,
  flat:`<svg viewBox="0 0 300 120"><g fill="none" stroke="currentColor" stroke-width="2">
    <rect x="45" y="20" width="210" height="80"/></g>
    <g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="6 4">
@@ -7429,6 +7467,14 @@ const BHELP=[
   "<p>먼저 <b>모양</b>에서 만들 물건과 가장 닮은 것을 누릅니다. 치수가 자동으로 채워집니다.</p>"
  +"<p>트레이 · 커버 · ㄷ찬넬 · ㄱ앵글 · 받침대 · 경사 트레이 · 덮개 · 평판, 여덟 가지가 있습니다.</p>"
  +"<div class='tip'>딱 맞는 게 없어도 괜찮습니다. 비슷한 것을 누르고 치수만 고치면 됩니다.</div>"],
+ ["마음 놓고 만지세요","undo","",
+  "<p>무엇을 눌러도 <b>↩ 되돌리기</b>로 돌아옵니다. 최근 <b>40번</b>까지 되돌릴 수 있습니다.</p>"
+ +"<p>너무 많이 되돌렸으면 <b>↪ 다시하기</b>로 앞으로 갑니다.</p>"
+ +"<ol><li>화면 위 <b>↩</b> 옆 숫자가 되돌릴 수 있는 횟수입니다</li>"
+ +"<li>PC 에서는 <b>Ctrl+Z</b> 되돌리기, <b>Ctrl+Y</b> 다시하기</li></ol>"
+ +"<div class='tip'>모양을 바꾸면 치수가 덮어써집니다. 그래도 되돌리기로 살아나니 "
+ +"<b>여러 모양을 눌러 보며 고르셔도 됩니다.</b><br>"
+ +"작업은 자동으로 저장됩니다. 앱을 닫았다 열어도 그대로 있습니다.</div>"],
  ["치수 맞추기","size","bbox",
   "<p><b>바닥 가로·세로</b>를 넣고, 네 변을 얼마나 접어 올릴지 정합니다.</p>"
  +"<ol><li><b>접을 변</b> — 뒤·앞·좌·우 중 접을 것만 누릅니다</li>"
@@ -7437,6 +7483,16 @@ const BHELP=[
  +"<li><b>끝단</b> — 날개 끝을 한 번 더 접어 손 베임을 막습니다</li></ol>"
  +"<div class='tip'>변마다 다르게 하려면 <b>변마다 따로</b>를 누르세요.<br>"
  +"준비된 모양에 없는 단면은 <b>자유 접기</b>로 직접 걸어갑니다.</div>"],
+ ["자유 접기","free","bfree",
+  "<p>준비된 모양에 없는 물건은 <b>자유 접기</b>로 만듭니다. "
+ +"옆에서 본 단면을 따라 <b>길이만큼 가고 각도만큼 꺾는</b> 방식입니다.</p>"
+ +"<ol><li><b>단면 모양</b>에서 ㄷ형 · Z형 · 계단 · 물받이 · U형 · 모자형 · 헴 판 · 각관 중 고릅니다</li>"
+ +"<li>구간마다 <b>길이</b>와 <b>꺾는 각도</b>를 넣습니다</li>"
+ +"<li><b>▲</b> 는 위로, <b>▼</b> 는 아래로 접는 것입니다</li>"
+ +"<li><b>＋</b> 로 구간 사이에 끼우고, <b>▲▼</b> 로 순서를 바꿉니다</li></ol>"
+ +"<p>고칠 때마다 <b>단면 그림</b>이 바로 다시 그려집니다. 3D 를 보지 않아도 모양이 읽힙니다.</p>"
+ +"<div class='tip'><b>닫힌 단면으로</b> — 끝이 처음 자리에 닿도록 구간을 하나 더해 줍니다. 각관을 만들 때 쓰세요.<br>"
+ +"<b>굴림 (곡면)</b> — 반경과 각도를 주면 여러 번 조금씩 접어 둥근 면을 만듭니다. 폴대 새들 같은 것에 씁니다.</div>"],
  ["구멍 뚫기","hole","bhole",
   "<p><b>타공</b>에서 구멍을 넣습니다. 원형 · 장공 · 사각 · 스터드볼트가 있습니다.</p>"
  +"<ol><li>어느 <b>면</b>에 뚫을지 고릅니다</li>"
@@ -7531,27 +7587,44 @@ function bFoldInit(){
 }
 (function(){
   const cv=$("#bview"); let dr=null, pts=new Map(), pd=0;
+  let pm=null;
   cv.addEventListener("pointerdown",e=>{
     pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(pts.size===2){const a=[...pts.values()];pd=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1;dr=null;return;}
-    dr={x:e.clientX,y:e.clientY,ry:bRot.y,rx:bRot.x};
+    if(pts.size===2){
+      const a=[...pts.values()];
+      pd=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1;
+      pm={x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2,px:bPan.x,py:bPan.y};
+      dr=null;return;
+    }
+    /* Shift 를 누르거나 오른쪽 단추면 화면 이동 */
+    const move=e.shiftKey||e.button===2;
+    dr={x:e.clientX,y:e.clientY,ry:bRot.y,rx:bRot.x,px:bPan.x,py:bPan.y,move};
     cv.classList.add("drag");
     try{cv.setPointerCapture(e.pointerId);}catch(err){}
   });
+  cv.addEventListener("contextmenu",e=>e.preventDefault());
   cv.addEventListener("pointermove",e=>{
     if(pts.has(e.pointerId))pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
     if(pts.size===2){
       const a=[...pts.values()], d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1;
       bZoom=Math.max(.4,Math.min(4,bZoom*(d/pd))); pd=d;
+      if(pm){
+        const mx=(a[0].x+a[1].x)/2, my=(a[0].y+a[1].y)/2;
+        bPan.x=pm.px+(mx-pm.x); bPan.y=pm.py+(my-pm.y);
+      }
       $("#bZVal").textContent=Math.round(bZoom*100)+"%"; bRedraw(); e.preventDefault(); return;
     }
     if(!dr)return;
-    bRot.y=dr.ry+(e.clientX-dr.x)*0.01;
-    bRot.x=Math.max(-0.25,Math.min(1.45,dr.rx+(e.clientY-dr.y)*0.008));
+    if(dr.move){
+      bPan.x=dr.px+(e.clientX-dr.x); bPan.y=dr.py+(e.clientY-dr.y);
+    }else{
+      bRot.y=dr.ry+(e.clientX-dr.x)*0.01;
+      bRot.x=Math.max(-0.25,Math.min(1.45,dr.rx+(e.clientY-dr.y)*0.008));
+    }
     bRedraw();
   });
   ["pointerup","pointercancel"].forEach(t=>window.addEventListener(t,e=>{
-    pts.delete(e.pointerId); if(pts.size<2)pd=0;
+    pts.delete(e.pointerId); if(pts.size<2){pd=0;pm=null;}
     if(dr){dr=null;cv.classList.remove("drag");}
   }));
   cv.addEventListener("wheel",e=>{
@@ -7597,7 +7670,7 @@ document.addEventListener("click",ev=>{
     p.mode="box"; p.w=sh[1]; p.d=sh[2];
     p.sides=[sh[3].slice(),sh[4].slice(),sh[5].slice(),sh[6].slice()];
     p.same=bSidesSame(p)?1:0;
-    bSave();bRender();toast(`${sh[0]} 모양을 넣었습니다`);return;}
+    bSave();bRender();toast(`${sh[0]} 모양을 넣었습니다 · ↩ 로 되돌릴 수 있습니다`);return;}
   if(d.bmode){bPush();p.mode=d.bmode;bSave();bRender();return;}
   if(d.bson!=null){bPush();const i=+d.bson;p.sides[i][0]=p.sides[i][0]?0:1;
     if(p.sides[i][0]&&!num(p.sides[i][1],0)){
@@ -7608,6 +7681,12 @@ document.addEventListener("click",ev=>{
     bSave();bRender();return;}
   if(d.bpdel!=null){bPush();p.path.splice(+d.bpdel,1);bSave();bRender();return;}
   if(d.bpins!=null){bPush();p.path.splice(+d.bpins+1,0,[60,90]);bSave();bRender();return;}
+  if(d.bpmv){
+    const[i,dv]=d.bpmv.split(",").map(Number), j=i+dv;
+    if(j<0||j>=p.path.length)return;
+    bPush();
+    const t2=p.path[i]; p.path[i]=p.path[j]; p.path[j]=t2;
+    bSave();bRender();return;}
   if(d.bpdir!=null){bPush();const i=+d.bpdir;p.path[i][1]=-num(p.path[i][1],0);bSave();bRender();return;}
   if(d.bfr!=null){
     const f2=BFREE[+d.bfr]; bPush();
@@ -7648,9 +7727,10 @@ document.addEventListener("click",ev=>{
   if(d.bmsg!=null){BS.msg=BMSG[+d.bmsg];bSave();bRender();return;}
   if(t.id==="bZIn"){bZoom=Math.min(4,bZoom*1.25);$("#bZVal").textContent=Math.round(bZoom*100)+"%";bDrawView();return;}
   if(t.id==="bZOut"){bZoom=Math.max(.4,bZoom/1.25);$("#bZVal").textContent=Math.round(bZoom*100)+"%";bDrawView();return;}
-  if(t.id==="bZFit"){bZoom=1;bRot={y:-0.62,x:0.5};$("#bZVal").textContent="100%";bDrawView();return;}
+  if(t.id==="bZFit"){bZoom=1;bPan={x:0,y:0};bRot={y:-0.62,x:0.5};$("#bZVal").textContent="100%";bDrawView();return;}
   if(t.id==="bPlay"){bPlay();return;}
   if(t.id==="bUndo"){bUndo();return;}
+  if(t.id==="bRedo"){bRedoGo();return;}
   if(t.id==="bReset"){
     if(!confirm("판금 접기를 처음 상태로 되돌릴까요? 만든 부재가 모두 지워집니다."))return;
     bPush();BS.parts=[newBPart()];BS.cur=0;bFold=1;bZoom=1;bSave();bRender();
@@ -7803,6 +7883,16 @@ function bRedrawAll(){
     : "";
   bDrawView();
 }
+/* PC 단축키 — Ctrl+Z 되돌리기, Ctrl+Y 또는 Ctrl+Shift+Z 다시하기 */
+window.addEventListener("keydown",ev=>{
+  if($("#bend").hidden)return;
+  const tag=(ev.target.tagName||"").toLowerCase();
+  if(tag==="input"||tag==="textarea"||tag==="select")return;
+  if(!(ev.ctrlKey||ev.metaKey))return;
+  const k=(ev.key||"").toLowerCase();
+  if(k==="z"&&!ev.shiftKey){ev.preventDefault();bUndo();}
+  else if(k==="y"||(k==="z"&&ev.shiftKey)){ev.preventDefault();bRedoGo();}
+});
 window.addEventListener("resize",()=>{if(!$("#bend").hidden)bDrawView();});
 bLoad();
 
