@@ -195,8 +195,17 @@ section{margin-top:16px;background:var(--panel);border:1px solid var(--line);bor
 .warnbar b{color:var(--accent)}
 .shd h2{cursor:pointer;user-select:none}
 .shd h2::before{content:"▾ ";color:var(--ink-3);font-size:10px}
-section.fold .shd h2::before{content:"▸ "}
+.shd h2[data-fold]{cursor:pointer;user-select:none}
+.shd h2[data-fold]::before{content:"▾ ";color:var(--ink-3)}
+section.fold .shd h2[data-fold]::before{content:"▸ ";color:var(--accent)}
 section.fold>*:not(.shd){display:none!important}
+section.fold .shd{margin-bottom:0}
+.bsteps{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px}
+.bsteps button{font:inherit;font-size:13px;padding:7px 13px;border-radius:999px;
+  border:1px solid var(--line);background:var(--panel);color:var(--ink-2);cursor:pointer;white-space:nowrap}
+.bsteps button:hover{border-color:var(--accent);color:var(--accent)}
+.bsteps button.now{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.bsteps .sp{flex:1}
 .alignbar{display:flex;flex-wrap:wrap;gap:5px;padding:9px;margin-bottom:9px;border:1px solid var(--accent);background:var(--accent-soft);border-radius:var(--r-s)}
 .alignbar button{font:inherit;font-size:12.5px;padding:6px 9px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);cursor:pointer}
 .alignbar .lbl{font-size:12px;color:var(--ink-2);align-self:center;margin-right:2px;font-weight:600}
@@ -280,6 +289,16 @@ body.in-app #home,body.in-app #rack,body.in-app #talk,body.in-app #bend{display:
 .bstat dd small{font-size:11px;font-weight:400;color:var(--ink-3)}
 .bcut{background:#fff;border:1px solid var(--line-2);border-radius:var(--r-s);overflow:hidden}
 .bcut svg{display:block;width:100%;height:auto}
+.bhelp .pic{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;
+  padding:12px;margin-bottom:12px}
+.bhelp .pic svg{display:block;width:100%;height:auto;max-height:190px}
+.bhelp h4{margin:0 0 6px;font-size:16px;font-weight:700}
+.bhelp p{margin:0 0 8px;font-size:14px;line-height:1.65;color:var(--ink-2)}
+.bhelp b{color:var(--ink)}
+.bhelp .tip{background:var(--accent-soft);border-left:3px solid var(--accent);
+  padding:9px 12px;border-radius:0 8px 8px 0;font-size:13px;color:var(--ink-2);margin-top:10px}
+.bhelp ol{margin:0 0 8px;padding-left:20px;font-size:14px;line-height:1.7;color:var(--ink-2)}
+.bhelp li{margin:3px 0}
 .bhole{display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid var(--line-2);
   border-left:3px solid #2b6cb0;border-radius:var(--r-s);background:var(--panel-2);margin-bottom:5px;
   flex-wrap:wrap}
@@ -490,6 +509,7 @@ body.in-app #home,body.in-app #rack,body.in-app #talk,body.in-app #bend{display:
     <button class="btn topb dark" id="bendHelp" aria-label="사용법">? 사용법</button>
   </div>
   <div class="chips" id="bTabs" style="margin-bottom:8px"></div>
+  <div class="bsteps" id="bSteps"></div>
 
   <div class="cols"><div class="colA">
   <div class="sheetbox">
@@ -549,10 +569,20 @@ body.in-app #home,body.in-app #rack,body.in-app #talk,body.in-app #bend{display:
   <section id="bBoxBox">
     <div class="shd"><h2 data-fold="bbox">치수 · 네 변</h2><span class="note" id="bBoxNote"></span></div>
     <div class="grid">
-      <div class="f"><label for="bW">가로 W</label><input id="bW" inputmode="numeric"></div>
-      <div class="f"><label for="bD">세로 D</label><input id="bD" inputmode="numeric"></div>
+      <div class="f"><label for="bW">가로 W</label>
+        <div class="stp"><button data-bstep="w,-10">−</button>
+        <input id="bW" inputmode="numeric" style="width:100%;font-family:var(--mono)">
+        <button data-bstep="w,10">+</button></div></div>
+      <div class="f"><label for="bD">세로 D</label>
+        <div class="stp"><button data-bstep="d,-10">−</button>
+        <input id="bD" inputmode="numeric" style="width:100%;font-family:var(--mono)">
+        <button data-bstep="d,10">+</button></div></div>
     </div>
-    <div class="plist" id="bSides" style="margin-top:11px"></div>
+    <div class="row" style="margin-top:11px">
+      <span style="font-size:11px;color:var(--ink-3)">변 설정</span>
+      <div class="chips" id="bSame"></div>
+    </div>
+    <div class="plist" id="bSides" style="margin-top:9px"></div>
   </section>
 
   <section id="bFreeBox" hidden>
@@ -629,6 +659,24 @@ body.in-app #home,body.in-app #rack,body.in-app #talk,body.in-app #bend{display:
      <button class="btn pri" id="bOut">공유 · 저장</button>
    </div>
  </div>
+</div>
+
+<div class="modal" id="bhelpm" hidden>
+  <div class="mbox" style="max-height:78vh">
+    <div class="mhd">
+      <h3 style="margin:0;font-size:16px" id="bHelpT">판금 접기</h3>
+      <button class="btn gho" data-bclose="bhelpm">닫기</button>
+    </div>
+    <div class="bhelp" id="bHelpBody"></div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn gho" id="bHelpPrev">← 앞으로</button>
+      <span style="flex:1;text-align:center;font-family:var(--mono);font-size:12.5px;color:var(--ink-3)" id="bHelpN"></span>
+      <button class="btn pri" id="bHelpNext">다음 →</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn gho" id="bHelpTry" style="flex:1">이 단계 해 보기</button>
+    </div>
+  </div>
 </div>
 
 <div class="modal" id="bconfm" hidden>
@@ -3249,7 +3297,13 @@ document.addEventListener("click",async ev=>{
   if(t.id==="goRack"){$("#home").hidden=true;$("#rack").hidden=false;window.scrollTo(0,0);rRender();return;}
   if(t.id==="rackBack"){showHome();return;}
   if(t.id==="goTalk"){$("#home").hidden=true;$("#talk").hidden=false;window.scrollTo(0,0);tRender();return;}
-  if(t.id==="goBend"){$("#home").hidden=true;$("#bend").hidden=false;window.scrollTo(0,0);bRender();return;}
+  if(t.id==="goBend"){
+    $("#home").hidden=true;$("#bend").hidden=false;window.scrollTo(0,0);
+    bRender();bFoldInit();
+    let seen=false; try{seen=localStorage.getItem("bendwork.v1.help")==="1";}catch(e){}
+    if(!seen){try{localStorage.setItem("bendwork.v1.help","1");}catch(e){}
+      setTimeout(()=>bHelpOpen(0),350);}
+    return;}
   if(t.id==="homeBtn"){
     if(hasWork(S)){LAST=JSON.parse(JSON.stringify(S));try{localStorage.setItem(LS+".last",JSON.stringify(S));}catch(e){}}
     save(); showHome(); return;}
@@ -6504,6 +6558,15 @@ tLoad();
    평판 한 장을 종이접기처럼 접어 모양을 만들고,
    발주처에 보여 줄 그림과 공장에 넘길 전개도를 같은 모양에서 뽑는다.
    ══════════════════════════════════════════════════════════════ */
+/* 섹션 제목을 눌러 접고 편다 — 앱 전체에서 (제목이 버튼이 아니라 따로 받는다) */
+document.addEventListener("click",ev=>{
+  const h=ev.target.closest&&ev.target.closest("[data-fold]");
+  if(!h)return;
+  const sec=h.closest("section"); if(!sec)return;
+  sec.classList.toggle("fold");
+  try{localStorage.setItem("cabdraw.v1.fold."+h.dataset.fold,
+    sec.classList.contains("fold")?"1":"0");}catch(e){}
+});
 const BLS="bendwork.v1";
 const BTH=[0.8,1.0,1.2,1.6,2.0,2.3,3.0,3.2,4.0];          /* 판 두께 */
 const BBD=[1.3,1.7,2.0,2.6,3.3,3.8,5.0,5.3,6.6];          /* 90도 절곡 공제 (일반값) */
@@ -7120,8 +7183,12 @@ function bRender(){
   $("#bParts").innerHTML=BS.parts.map((x,i)=>
     `<button class="chip" data-bpart="${i}" aria-pressed="${i===BS.cur}">${esc(x.name||(i+1)+"번")}</button>`).join("")
     +`<button class="chip add" id="bAddPart">+ 부재 추가</button>`
+    +`<button class="chip add" id="bCopyPart">이 부재 복사</button>`
     +(BS.parts.length>1?`<button class="chip add" id="bDelPart" style="color:var(--danger)">이 부재 삭제</button>`:"");
   $("#bPartNote").textContent=`${BS.parts.length}개`;
+  $("#bSteps").innerHTML=BSTEP.map(([k,l])=>
+    `<button data-bstepgo="${k}"${bStepNow===k?' class="now"':''}>${l}</button>`).join("")
+    +`<span class="sp"></span><button data-bfoldall="1">${bAllFolded()?"모두 펼치기":"모두 접기"}</button>`;
   const set=(id,v)=>{const e=$(id);if(e&&document.activeElement!==e)e.value=v;};
   set("#bName",p.name||""); set("#bW",num(p.w,300)); set("#bD",num(p.d,200));
   set("#bQty",num(p.qty,1)); set("#bPW",num(p.pw,200));
@@ -7134,15 +7201,35 @@ function bRender(){
   $("#bMode").querySelectorAll(".chip").forEach(b=>b.setAttribute("aria-pressed",b.dataset.bmode===p.mode));
   $("#bBoxBox").hidden=p.mode!=="box";
   $("#bFreeBox").hidden=p.mode!=="free";
-  /* 네 변 */
-  $("#bSides").innerHTML=(p.sides||[]).map((sd,i)=>
-    `<div class="bside${sd[0]?"":" off"}">`
-    +`<span class="nm">${BSIDEN[i]}</span>`
-    +`<button class="tg" data-bson="${i}" aria-pressed="${!!sd[0]}">${sd[0]?"접음":"없음"}</button>`
-    +`<span class="f2"><label>높이</label><input type="number" data-bsv="${i},1" value="${num(sd[1],0)}" inputmode="numeric"></span>`
-    +`<span class="f2"><label>각도</label><input type="number" data-bsv="${i},2" value="${num(sd[2],90)}" inputmode="numeric"></span>`
-    +`<span class="f2"><label>끝단</label><input type="number" data-bsv="${i},3" value="${num(sd[3],0)}" inputmode="numeric"></span>`
-    +`</div>`).join("");
+  /* 네 변 — 같게 / 따로 */
+  const same=p.same==null?bSidesSame(p):!!p.same;
+  $("#bSame").innerHTML=
+    `<button class="chip" data-bsame="1" aria-pressed="${same}">네 변 같게</button>`
+   +`<button class="chip" data-bsame="0" aria-pressed="${!same}">변마다 따로</button>`;
+  if(same){
+    const on=(p.sides||[]).find(x=>x&&x[0])||[1,60,90,0];
+    $("#bSides").innerHTML=
+      `<div class="bside">`
+      +`<span class="nm" style="width:auto">접을 변</span>`
+      +(p.sides||[]).map((sd,i)=>
+        `<button class="tg" data-bson="${i}" aria-pressed="${!!sd[0]}">${BSIDEN[i]}</button>`).join("")
+      +`</div>`
+      +`<div class="bside">`
+      +`<span class="nm" style="width:auto">네 변</span>`
+      +`<span class="f2"><label>높이</label><input type="number" data-bsall="1" value="${num(on[1],0)}" inputmode="numeric"></span>`
+      +`<span class="f2"><label>각도</label><input type="number" data-bsall="2" value="${num(on[2],90)}" inputmode="numeric"></span>`
+      +`<span class="f2"><label>끝단</label><input type="number" data-bsall="3" value="${num(on[3],0)}" inputmode="numeric"></span>`
+      +`</div>`;
+  }else{
+    $("#bSides").innerHTML=(p.sides||[]).map((sd,i)=>
+      `<div class="bside${sd[0]?"":" off"}">`
+      +`<span class="nm">${BSIDEN[i]}</span>`
+      +`<button class="tg" data-bson="${i}" aria-pressed="${!!sd[0]}">${sd[0]?"접음":"없음"}</button>`
+      +`<span class="f2"><label>높이</label><input type="number" data-bsv="${i},1" value="${num(sd[1],0)}" inputmode="numeric"></span>`
+      +`<span class="f2"><label>각도</label><input type="number" data-bsv="${i},2" value="${num(sd[2],90)}" inputmode="numeric"></span>`
+      +`<span class="f2"><label>끝단</label><input type="number" data-bsv="${i},3" value="${num(sd[3],0)}" inputmode="numeric"></span>`
+      +`</div>`).join("");
+  }
   $("#bBoxNote").textContent=`바닥 ${num(p.w,0)} × ${num(p.d,0)}`;
   /* 자유 접기 */
   $("#bFreeShapes").innerHTML=BFREE.map((f2,i)=>`<button class="chip" data-bfr="${i}">${f2[0]}</button>`).join("");
@@ -7268,6 +7355,180 @@ function bPlay(){
   bFold=0; bAnim=requestAnimationFrame(step);
 }
 /* ══════════ 조작 ══════════ */
+/* ── 그림으로 보는 사용법 ── */
+const BHELPSVG={
+ shape:`<svg viewBox="0 0 300 120"><g fill="none" stroke="currentColor" stroke-width="2">
+   <path d="M20 90 L20 55 L60 35 L60 70 Z"/><path d="M60 70 L60 35 L100 55 L100 90 Z"/>
+   <path d="M20 90 L60 70 L100 90"/></g>
+   <g fill="none" stroke="currentColor" stroke-width="1.6">
+   <rect x="130" y="40" width="46" height="22" rx="11"/><rect x="184" y="40" width="46" height="22" rx="11"/>
+   <rect x="130" y="70" width="46" height="22" rx="11"/><rect x="184" y="70" width="46" height="22" rx="11"/></g>
+   <g fill="currentColor" font-size="10" font-family="sans-serif" text-anchor="middle">
+   <text x="153" y="55">트레이</text><text x="207" y="55">커버</text>
+   <text x="153" y="85">ㄷ찬넬</text><text x="207" y="85">앵글</text></g>
+   <path d="M108 65 L124 65" stroke="currentColor" stroke-width="2" marker-end="url(#bh1)"/>
+   <defs><marker id="bh1" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+   <path d="M0 0 L7 3.5 L0 7 z" fill="currentColor"/></marker></defs></svg>`,
+ size:`<svg viewBox="0 0 300 120"><g fill="none" stroke="currentColor" stroke-width="2">
+   <path d="M60 95 L200 95 L240 70 L100 70 Z"/>
+   <path d="M60 95 L60 60 M200 95 L200 60 M240 70 L240 35 M100 70 L100 35"/>
+   <path d="M60 60 L200 60 L240 35 L100 35 Z" stroke-dasharray="4 3"/></g>
+   <g stroke="currentColor" stroke-width="1"><path d="M48 95 L48 60"/></g>
+   <g fill="currentColor" font-size="11" font-family="sans-serif">
+   <text x="30" y="80">높이</text><text x="120" y="112">바닥 가로</text>
+   <text x="248" y="55">각도</text></g>
+   <path d="M243 62 A 20 20 0 0 0 233 46" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>`,
+ hole:`<svg viewBox="0 0 300 120"><g fill="none" stroke="currentColor" stroke-width="2">
+   <rect x="40" y="25" width="220" height="70" rx="3"/></g>
+   <g fill="currentColor"><circle cx="65" cy="45" r="6"/><circle cx="235" cy="45" r="6"/>
+   <circle cx="65" cy="78" r="6"/><circle cx="235" cy="78" r="6"/></g>
+   <g fill="currentColor"><rect x="122" y="53" width="56" height="16" rx="8"/></g>
+   <g stroke="currentColor" stroke-width="1" fill="none">
+   <path d="M40 15 L65 15 M40 12 L40 18 M65 12 L65 18"/>
+   <path d="M28 25 L28 45 M25 25 L31 25 M25 45 L31 45"/></g>
+   <g fill="currentColor" font-size="10" font-family="sans-serif">
+   <text x="46" y="10">가로 위치</text><text x="2" y="38">세로</text>
+   <text x="128" y="84" font-size="11">장공</text></g></svg>`,
+ view:`<svg viewBox="0 0 300 120"><g fill="none" stroke="currentColor" stroke-width="2">
+   <path d="M95 92 L175 92 L205 72 L125 72 Z"/>
+   <path d="M95 92 L95 62 L125 42 L125 72"/><path d="M175 92 L175 62 L205 42 L205 72"/>
+   <path d="M95 62 L175 62 L205 42 L125 42 Z"/></g>
+   <g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+   <path d="M55 60 A 40 40 0 0 1 80 28" marker-end="url(#bh2)"/>
+   <path d="M245 60 A 40 40 0 0 0 220 28" marker-end="url(#bh2)"/></g>
+   <defs><marker id="bh2" markerWidth="7" markerHeight="7" refX="3" refY="3.5" orient="auto">
+   <path d="M0 0 L7 3.5 L0 7 z" fill="currentColor"/></marker></defs>
+   <g fill="currentColor" font-size="11" font-family="sans-serif" text-anchor="middle">
+   <text x="150" y="115">끌어서 돌립니다</text></g></svg>`,
+ send:`<svg viewBox="0 0 300 120"><g fill="none" stroke="currentColor" stroke-width="2">
+   <rect x="30" y="18" width="150" height="86" rx="4"/>
+   <path d="M30 40 L180 40"/></g>
+   <g fill="none" stroke="currentColor" stroke-width="1.6">
+   <path d="M60 88 L105 88 L120 78 L75 78 Z"/><path d="M60 88 L60 70 L75 60 L75 78"/>
+   <path d="M105 88 L105 70 L120 60 L120 78"/><path d="M60 70 L105 70 L120 60 L75 60 Z"/></g>
+   <g fill="currentColor" font-size="9" font-family="sans-serif">
+   <text x="38" y="33">배전반 받침대</text><text x="136" y="55">300</text>
+   <text x="136" y="68">200</text><text x="136" y="81">60</text></g>
+   <g fill="none" stroke="currentColor" stroke-width="2">
+   <path d="M195 60 L240 60" marker-end="url(#bh3)"/>
+   <path d="M252 30 h40 v34 h-14 l-6 8 -6 -8 h-14 z"/></g>
+   <defs><marker id="bh3" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+   <path d="M0 0 L7 3.5 L0 7 z" fill="currentColor"/></marker></defs>
+   <g fill="currentColor" font-size="9" font-family="sans-serif" text-anchor="middle">
+   <text x="272" y="52">카톡</text></g></svg>`,
+ flat:`<svg viewBox="0 0 300 120"><g fill="none" stroke="currentColor" stroke-width="2">
+   <rect x="45" y="20" width="210" height="80"/></g>
+   <g fill="none" stroke="currentColor" stroke-width="1.4" stroke-dasharray="6 4">
+   <path d="M85 20 L85 100"/><path d="M215 20 L215 100"/>
+   <path d="M45 42 L255 42"/><path d="M45 78 L255 78"/></g>
+   <g fill="currentColor" font-size="10" font-family="sans-serif" text-anchor="middle">
+   <text x="150" y="16">▲ 90°</text><text x="150" y="114">파선이 접는 선</text></g></svg>`
+};
+const BHELP=[
+ ["모양 고르기","shape","bshape",
+  "<p>먼저 <b>모양</b>에서 만들 물건과 가장 닮은 것을 누릅니다. 치수가 자동으로 채워집니다.</p>"
+ +"<p>트레이 · 커버 · ㄷ찬넬 · ㄱ앵글 · 받침대 · 경사 트레이 · 덮개 · 평판, 여덟 가지가 있습니다.</p>"
+ +"<div class='tip'>딱 맞는 게 없어도 괜찮습니다. 비슷한 것을 누르고 치수만 고치면 됩니다.</div>"],
+ ["치수 맞추기","size","bbox",
+  "<p><b>바닥 가로·세로</b>를 넣고, 네 변을 얼마나 접어 올릴지 정합니다.</p>"
+ +"<ol><li><b>접을 변</b> — 뒤·앞·좌·우 중 접을 것만 누릅니다</li>"
+ +"<li><b>높이</b> — 날개를 얼마나 세울지</li>"
+ +"<li><b>각도</b> — 90도가 직각, 60도면 벌어집니다</li>"
+ +"<li><b>끝단</b> — 날개 끝을 한 번 더 접어 손 베임을 막습니다</li></ol>"
+ +"<div class='tip'>변마다 다르게 하려면 <b>변마다 따로</b>를 누르세요.<br>"
+ +"준비된 모양에 없는 단면은 <b>자유 접기</b>로 직접 걸어갑니다.</div>"],
+ ["구멍 뚫기","hole","bhole",
+  "<p><b>타공</b>에서 구멍을 넣습니다. 원형 · 장공 · 사각 · 스터드볼트가 있습니다.</p>"
+ +"<ol><li>어느 <b>면</b>에 뚫을지 고릅니다</li>"
+ +"<li>그 면의 <b>왼쪽 위에서 잰 위치</b>를 넣습니다</li>"
+ +"<li>지름이나 가로·세로를 넣습니다</li></ol>"
+ +"<div class='tip'><b>4개 모서리</b>를 누르면 네 귀퉁이에 한 번에 들어갑니다.<br>"
+ +"구멍은 3D 와 전개도에 함께 나오고, 접으면 같이 접힙니다.</div>"],
+ ["돌려 보기","view","",
+  "<p>그림을 <b>손가락으로 끌면</b> 돌아갑니다. 두 손가락으로 벌리면 커집니다.</p>"
+ +"<p><b>▶ 접기</b>를 누르면 평판이 접혀 올라가는 모습이 재생됩니다. "
+ +"발주처에 “이렇게 접어서 만듭니다” 설명하실 때 쓰세요.</p>"
+ +"<div class='tip'>아래 <b>접힌 정도</b> 막대를 끌면 중간 상태에서 멈춰 볼 수 있습니다.</div>"],
+ ["발주처에 보내기","send","bconf",
+  "<p><b>확인용 그림</b>에 품명과 발주처를 넣고 <b>확인용 그림 만들기</b>를 누릅니다.</p>"
+ +"<p>그림 한 장에 <b>치수 세 개</b>와 <b>문구 한 줄</b>만 들어갑니다. "
+ +"발주처가 보기에 군더더기가 없습니다.</p>"
+ +"<div class='tip'><b>카톡으로 보내기</b>로 바로 나갑니다.<br>"
+ +"<b>보낸 기록에 남기기</b>를 누르면 그림과 날짜가 저장되어, 나중에 “이대로 하기로 했었다”의 근거가 됩니다.</div>"],
+ ["공장에 넘기기","flat","",
+  "<p>위 탭에서 <b>전개도</b>를 누르면 잘라야 할 크기가 나옵니다.</p>"
+ +"<p><b>파선이 접는 선</b>, <b>▲ 90°</b>가 접는 방향과 각도입니다. "
+ +"절곡 공제를 빼고 계산하므로 그대로 자르면 됩니다.</p>"
+ +"<p><b>판재 배치</b>는 정척 한 장에서 몇 개가 나오는지 보여 줍니다.</p>"
+ +"<div class='tip'>전개 계산은 일반적인 공제값을 씁니다. "
+ +"공장에서 쓰는 값이 다르면 알려 주세요.</div>"]
+];
+let bHelpI=0;
+function bHelpDraw(){
+  const[t,pic,step,html]=BHELP[bHelpI];
+  $("#bHelpT").textContent=`${bHelpI+1}. ${t}`;
+  $("#bHelpBody").innerHTML=`<div class="pic" style="color:var(--ink-2)">${BHELPSVG[pic]||""}</div>`+html;
+  $("#bHelpN").textContent=`${bHelpI+1} / ${BHELP.length}`;
+  $("#bHelpPrev").disabled=bHelpI===0;
+  $("#bHelpNext").textContent=bHelpI===BHELP.length-1?"끝":"다음 →";
+  $("#bHelpTry").hidden=!step;
+  $("#bHelpBody").scrollTop=0;
+}
+function bHelpOpen(i){
+  bHelpI=Math.max(0,Math.min(BHELP.length-1,i||0));
+  bHelpDraw();
+  $("#bhelpm").hidden=false;
+}
+/* ── 작업 단계 · 접기 ── */
+const BSTEP=[["bshape","① 모양"],["bbox","② 치수"],["bhole","③ 타공"],["bconf","④ 보내기"]];
+let bStepNow="";
+function bSecOf(k){
+  const h=document.querySelector(`#bend [data-fold="${k}"]`);
+  return h?h.closest("section"):null;
+}
+function bAllFolded(){
+  const hs=[...document.querySelectorAll("#bend [data-fold]")];
+  return hs.length>0&&hs.every(h=>h.closest("section").classList.contains("fold"));
+}
+function bFoldAll(on){
+  document.querySelectorAll("#bend [data-fold]").forEach(h=>{
+    const sec=h.closest("section");
+    sec.classList.toggle("fold",!!on);
+    try{localStorage.setItem("cabdraw.v1.fold."+h.dataset.fold,on?"1":"0");}catch(e){}
+  });
+}
+function bStepGo(k){
+  bStepNow=k;
+  const p=bp();
+  const key=k==="bbox"&&p.mode==="free"?"bfree":k;
+  bFoldAll(true);
+  const sec=bSecOf(key);
+  if(sec){
+    sec.classList.remove("fold");
+    try{localStorage.setItem("cabdraw.v1.fold."+key,"0");}catch(e){}
+  }
+  if(k==="bbox"){const s2=bSecOf("bshape");if(s2)s2.classList.remove("fold");}
+  bRender();
+  if(sec)setTimeout(()=>sec.scrollIntoView({block:"start",behavior:"smooth"}),40);
+}
+function bSidesSame(p){
+  const on=(p.sides||[]).filter(x=>x&&x[0]);
+  if(on.length<2)return true;
+  return on.every(x=>num(x[1],0)===num(on[0][1],0)&&num(x[2],90)===num(on[0][2],90)
+    &&num(x[3],0)===num(on[0][3],0));
+}
+/* 처음 열면 자주 쓰는 것만 펼쳐 둔다 */
+function bFoldInit(){
+  let done=false;
+  try{done=localStorage.getItem("cabdraw.v1.fold.binit")==="1";}catch(e){}
+  if(done)return;
+  ["bhole","bweld","bcalc","bconf","brev"].forEach(k=>{
+    const sec=bSecOf(k); if(!sec)return;
+    sec.classList.add("fold");
+    try{localStorage.setItem("cabdraw.v1.fold."+k,"1");}catch(e){}
+  });
+  try{localStorage.setItem("cabdraw.v1.fold.binit","1");}catch(e){}
+}
 (function(){
   const cv=$("#bview"); let dr=null, pts=new Map(), pd=0;
   cv.addEventListener("pointerdown",e=>{
@@ -7315,15 +7576,35 @@ document.addEventListener("click",ev=>{
     if(BS.parts.length<2)return;
     if(!confirm(`${p.name} 을(를) 지울까요?`))return;
     bPush();BS.parts.splice(BS.cur,1);BS.cur=Math.max(0,BS.cur-1);bSave();bRender();return;}
+  if(d.bstepgo){bStepGo(d.bstepgo);return;}
+  if(d.bfoldall){bFoldAll(!bAllFolded());bRender();return;}
+  if(d.bstep){
+    const[k,dv]=d.bstep.split(",");
+    bPush();p[k]=Math.max(1,num(p[k],0)+ +dv);bSave();bRender();return;}
+  if(d.bsame!=null){bPush();p.same=+d.bsame?1:0;
+    if(p.same){const on=(p.sides||[]).find(x=>x&&x[0])||[1,60,90,0];
+      (p.sides||[]).forEach(sd=>{sd[1]=on[1];sd[2]=on[2];sd[3]=on[3];});}
+    bSave();bRender();return;}
+  if(t.id==="bCopyPart"){
+    bPush();const n=JSON.parse(JSON.stringify(p));
+    n.id=uid();n.name=(p.name||"부재")+" 사본";
+    (n.holes||[]).forEach(h=>h.id=uid());
+    BS.parts.push(n);BS.cur=BS.parts.length-1;
+    bSave();bRender();toast("부재를 복사했습니다");return;}
   if(d.bcol!=null){bPush();p.col=+d.bcol;bSave();bRender();return;}
   if(d.bsh!=null){
     const sh=BSHAPE[+d.bsh]; bPush();
     p.mode="box"; p.w=sh[1]; p.d=sh[2];
     p.sides=[sh[3].slice(),sh[4].slice(),sh[5].slice(),sh[6].slice()];
+    p.same=bSidesSame(p)?1:0;
     bSave();bRender();toast(`${sh[0]} 모양을 넣었습니다`);return;}
   if(d.bmode){bPush();p.mode=d.bmode;bSave();bRender();return;}
   if(d.bson!=null){bPush();const i=+d.bson;p.sides[i][0]=p.sides[i][0]?0:1;
-    if(p.sides[i][0]&&!num(p.sides[i][1],0))p.sides[i][1]=60;
+    if(p.sides[i][0]&&!num(p.sides[i][1],0)){
+      const on=(p.sides||[]).find(x=>x&&x[0]&&num(x[1],0));
+      p.sides[i][1]=on?num(on[1],60):60;
+      if(on){p.sides[i][2]=num(on[2],90);p.sides[i][3]=num(on[3],0);}
+    }
     bSave();bRender();return;}
   if(d.bpdel!=null){bPush();p.path.splice(+d.bpdel,1);bSave();bRender();return;}
   if(d.bpins!=null){bPush();p.path.splice(+d.bpins+1,0,[60,90]);bSave();bRender();return;}
@@ -7411,7 +7692,17 @@ document.addEventListener("click",ev=>{
     bSave();bRender();toast("그때 상태로 되돌렸습니다");return;}
   if(d.brevdel!=null){BS.revs.splice(+d.brevdel,1);bSave();bRender();return;}
   if(t.id==="bendBack"){showHome();return;}
-  if(t.id==="bendHelp"){
+  if(t.id==="bendHelp"){bHelpOpen(0);return;}
+  if(t.id==="bHelpPrev"){bHelpOpen(bHelpI-1);return;}
+  if(t.id==="bHelpNext"){
+    if(bHelpI>=BHELP.length-1){$("#bhelpm").hidden=true;return;}
+    bHelpOpen(bHelpI+1);return;}
+  if(t.id==="bHelpTry"){
+    const step=BHELP[bHelpI][2];
+    $("#bhelpm").hidden=true;
+    if(step)bStepGo(step);
+    return;}
+  if(t.id==="bendHelpOld"){
     alert("판금 접기 — 사용법\n\n"
       +"1. 모양을 고릅니다 (트레이·커버·ㄷ찬넬…). 치수가 채워집니다\n"
       +"2. 바닥 크기와 네 변의 높이·각도를 고칩니다\n"
@@ -7459,6 +7750,9 @@ async function bConfOut(share){
 document.addEventListener("input",ev=>{
   if($("#bend").hidden)return;
   const id=ev.target.id, v=ev.target.value, d=ev.target.dataset||{}, p=bp();
+  if(d.bsall){const k=+d.bsall;
+    (p.sides||[]).forEach(sd=>{sd[k]=num(v,0);});
+    bSave();bRedrawAll();return;}
   if(d.bsv){const[i,k]=d.bsv.split(",").map(Number);p.sides[i][k]=num(v,0);bSave();bRedrawAll();return;}
   if(d.bhv){
     const[i,k]=d.bhv.split(",");
