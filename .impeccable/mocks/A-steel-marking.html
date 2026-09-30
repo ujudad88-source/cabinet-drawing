@@ -1,0 +1,115 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<title>A 강재 마킹</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;500;700;900&family=Martian+Mono:wght@400;600;700&display=swap">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#8d949a;font-family:"Gothic A1",sans-serif;padding:44px 28px 28px;display:flex;gap:26px;align-items:flex-start}
+.tag{position:absolute;top:12px;left:30px;font:700 13px/1 "Martian Mono",monospace;letter-spacing:.14em;color:#20262b;background:#ffd21e;padding:7px 11px}
+.ph{width:372px;height:806px;overflow:hidden;position:relative;
+  background:
+   radial-gradient(38px 26px at 12% 18%,rgba(255,255,255,.55),transparent 70%),
+   radial-gradient(44px 30px at 78% 34%,rgba(255,255,255,.4),transparent 70%),
+   radial-gradient(30px 22px at 40% 62%,rgba(255,255,255,.5),transparent 70%),
+   radial-gradient(52px 30px at 66% 86%,rgba(255,255,255,.35),transparent 70%),
+   #eef1f3;
+  box-shadow:0 0 0 1px #20262b, 10px 12px 0 rgba(20,26,32,.35);color:#2a3339}
+.bar{background:#2a3339;color:#eef1f3;padding:13px 16px 12px;display:flex;align-items:center;gap:11px}
+.bar .k{width:26px;height:26px;border:2px solid #ffd21e;position:relative;flex:none}
+.bar .k:after{content:"";position:absolute;left:4px;top:4px;right:4px;bottom:4px;background:#ffd21e}
+.bar h1{font:900 16px/1.1 "Gothic A1";letter-spacing:.06em}
+.bar .sn{margin-left:auto;font:600 10px/1 "Martian Mono",monospace;color:#8f9ba3;letter-spacing:.1em}
+.hd{padding:18px 16px 10px}
+.hd .q{font:900 26px/1.25 "Gothic A1";letter-spacing:-.01em}
+.hd .q i{font-style:normal;background:linear-gradient(transparent 58%,#ffd21e 58%,#ffd21e 94%,transparent 94%);padding:0 2px}
+.tiles{padding:6px 16px 0;display:flex;flex-direction:column;gap:9px}
+.tile{background:#f7f9fa;border:1.5px solid #2a3339;padding:13px 14px 12px;display:flex;gap:12px;align-items:flex-start;position:relative}
+.tile:before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:#2a3339}
+.tile.on:before{background:#ffd21e}
+.tile svg{width:38px;height:38px;flex:none;color:#2a3339;margin-left:4px}
+.tile b{display:block;font:900 16px/1.2 "Gothic A1";letter-spacing:.01em}
+.tile s{display:block;text-decoration:none;font:400 11.5px/1.45 "Gothic A1";color:#5d6a73;margin-top:3px}
+.tile u{position:absolute;right:11px;top:12px;text-decoration:none;font:700 9px/1 "Martian Mono",monospace;letter-spacing:.14em;color:#93a0a8}
+.foot{margin:14px 16px 0;border-top:1.5px dashed #a9b4ba;padding-top:9px;font:400 10px/1.5 "Gothic A1";color:#75828a}
+.wbar{background:#2a3339;color:#eef1f3;padding:11px 14px;display:flex;align-items:center;gap:10px}
+.wbar .bk{font:900 15px/1 "Gothic A1"}
+.wbar b{font:900 15px/1 "Gothic A1";letter-spacing:.04em}
+.wbar .sp{margin-left:auto;display:flex;gap:6px}
+.wbar .sp span{font:700 10px/1 "Martian Mono",monospace;border:1.5px solid #6d7a83;padding:6px 8px;letter-spacing:.08em}
+.wbar .sp span.y{border-color:#ffd21e;background:#ffd21e;color:#2a3339}
+.sech{display:flex;align-items:center;gap:8px;padding:9px 14px;border-top:1.5px solid #2a3339;background:#dfe5e8}
+.sech i{font-style:normal;font:700 9px/1 "Martian Mono",monospace;background:#2a3339;color:#eef1f3;padding:4px 6px;letter-spacing:.1em}
+.sech b{font:900 13px/1 "Gothic A1";letter-spacing:.03em;flex:1}
+.sech em{font-style:normal;font:700 14px/1 "Gothic A1";color:#75828a}
+.dims{padding:12px 14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;background:#eef1f3}
+.dim{background:#fff;border:1.5px solid #2a3339;padding:7px 9px 8px}
+.dim span{display:block;font:700 9px/1 "Martian Mono",monospace;color:#7b8891;letter-spacing:.13em;margin-bottom:4px}
+.dim strong{font:700 23px/1 "Martian Mono",monospace;letter-spacing:-.02em}
+.dim small{font:400 10px/1 "Gothic A1";color:#93a0a8;margin-left:2px}
+.dim.f{border-color:#c8341f;box-shadow:inset 0 0 0 2px #ffd21e}
+.pv{background:#2a3339;padding:14px;position:relative}
+.pv .lb{position:absolute;left:14px;top:12px;font:700 9px/1 "Martian Mono",monospace;color:#ffd21e;letter-spacing:.16em}
+.pv .zm{position:absolute;right:14px;top:11px;font:700 10px/1 "Martian Mono",monospace;color:#8f9ba3}
+.pv svg{display:block;width:100%;height:186px;margin-top:8px}
+.grade{padding:11px 14px;background:#eef1f3;display:flex;flex-direction:column;gap:6px}
+.g{display:flex;align-items:center;gap:9px;padding:8px 10px;background:#fff;border-left:6px solid}
+.g i{font-style:normal;font:900 9px/1 "Martian Mono",monospace;letter-spacing:.12em;padding:4px 6px;color:#fff;flex:none}
+.g span{font:500 11px/1.35 "Gothic A1"}
+.g.r{border-color:#c8341f}.g.r i{background:#c8341f}
+.g.y{border-color:#d9a400}.g.y i{background:#d9a400}
+.g.n{border-color:#7b8891}.g.n i{background:#7b8891}
+.act{padding:12px 14px 16px;background:#eef1f3;display:flex;gap:8px;border-top:1.5px solid #2a3339}
+.btn{flex:1;text-align:center;padding:14px 4px;border:1.5px solid #2a3339;background:#fff;font:900 13px/1 "Gothic A1";letter-spacing:.02em}
+.btn.p{background:#ffd21e;box-shadow:4px 4px 0 #2a3339}
+</style></head><body>
+<div class="tag">시안 A · 강재 마킹</div>
+
+<div class="ph">
+  <div class="bar"><div class="k"></div><h1>광전기통신 영업 지원</h1><div class="sn">KJ-01</div></div>
+  <div class="hd"><div class="q">무엇을 <i>만드시겠어요?</i></div></div>
+  <div class="tiles">
+    <div class="tile on"><svg viewBox="0 0 120 90"><g fill="none" stroke="currentColor" stroke-width="3"><polygon points="34,20 78,20 70,12 26,12"/><polygon points="34,20 34,80 26,72 26,12"/><rect x="34" y="20" width="44" height="60"/><line x1="34" y1="70" x2="78" y2="70"/></g><g fill="none" stroke="currentColor" stroke-width="1.8"><rect x="38" y="24" width="36" height="42"/><rect x="48" y="27" width="16" height="4"/></g></svg>
+      <div><b>손도면 제작</b><s>치수와 부속만 넣으면 외형도 · 정면도 · 전개도 · 가공표</s></div><u>01</u></div>
+    <div class="tile"><svg viewBox="0 0 120 90"><g fill="none" stroke="currentColor" stroke-width="3"><rect x="36" y="8" width="48" height="76"/></g><g stroke="currentColor" stroke-width="1.8" fill="none"><rect x="41" y="14" width="38" height="8"/><rect x="41" y="25" width="38" height="8"/><rect x="41" y="36" width="38" height="14"/><rect x="41" y="53" width="38" height="8"/></g></svg>
+      <div><b>캐비닛 랙 실장</b><s>19인치 랙에 장비를 U 단위로 얹고 실장도 · 내역서</s></div><u>02</u></div>
+    <div class="tile"><svg viewBox="0 0 120 90"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"><path d="M22 62 L22 40 L58 22 L58 44 Z"/><path d="M58 44 L58 22 L98 34 L98 56 Z"/><path d="M22 62 L58 44 L98 56"/></g></svg>
+      <div><b>판금 접기</b><s>의뢰받은 모양을 접어 보이고 발주처 컨펌을 받습니다</s></div><u>03</u></div>
+    <div class="tile"><svg viewBox="0 0 120 90"><g fill="none" stroke="currentColor" stroke-width="3"><path d="M26 16h50a6 6 0 0 1 6 6v28a6 6 0 0 1-6 6H46L32 68V56h-6a6 6 0 0 1-6-6V22a6 6 0 0 1 6-6z"/></g><g stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="32" y1="28" x2="70" y2="28"/><line x1="32" y1="36" x2="62" y2="36"/></g></svg>
+      <div><b>영업 문구 도우미</b><s>상황에 맞는 표현을 찾고, 쓴 문장을 다듬습니다</s></div><u>04</u></div>
+  </div>
+  <div class="foot">↺ 직전 작업 — 판금 접기 · 09/29 17:42 · 이어서 하기<br>손도면 제작은 항상 빈 상태로 시작합니다.</div>
+</div>
+
+<div class="ph">
+  <div class="wbar"><span class="bk">←</span><b>판금 접기</b><div class="sp"><span>되돌리기 3</span><span class="y">저장</span></div></div>
+  <div class="sech"><i>1</i><b>바탕 판재</b><em>−</em></div>
+  <div class="dims">
+    <div class="dim"><span>W 가로</span><strong>600</strong></div>
+    <div class="dim"><span>D 세로</span><strong>400</strong></div>
+    <div class="dim f"><span>T 두께</span><strong>1.6<small>T</small></strong></div>
+  </div>
+  <div class="sech"><i>2</i><b>접기 · 타공</b><em>−</em></div>
+  <div class="pv">
+    <div class="lb">미리보기 · 우측 ISO</div><div class="zm">100%</div>
+    <svg viewBox="0 0 320 186">
+      <g fill="none" stroke="#8f9ba3" stroke-width="1"><path d="M20 152 L300 152" stroke-dasharray="4 4"/></g>
+      <g stroke="#eef1f3" stroke-width="2" stroke-linejoin="round">
+        <path d="M60 128 L60 62 L170 30 L170 96 Z" fill="#48545c"/>
+        <path d="M170 96 L170 30 L272 58 L272 124 Z" fill="#5c6a73"/>
+        <path d="M60 62 L170 30 L272 58 L162 92 Z" fill="#76858f"/>
+      </g>
+      <g stroke="#ffd21e" stroke-width="2" stroke-dasharray="7 4" fill="none"><path d="M170 30 L170 96"/></g>
+      <g fill="#2a3339" stroke="#ffd21e" stroke-width="1.6"><ellipse cx="205" cy="70" rx="9" ry="5"/><ellipse cx="232" cy="78" rx="9" ry="5"/></g>
+      <g stroke="#c8341f" stroke-width="2" fill="none"><rect x="86" y="88" width="30" height="22"/></g>
+      <g stroke="#ffd21e" stroke-width="1.2"><path d="M60 142 L272 142 M60 138 L60 146 M272 138 L272 146"/></g>
+      <text x="166" y="136" text-anchor="middle" fill="#ffd21e" font-family="Martian Mono,monospace" font-size="11" font-weight="700">600</text>
+    </svg>
+  </div>
+  <div class="sech"><i>3</i><b>검사</b><em>−</em></div>
+  <div class="grade">
+    <div class="g r"><i>제작 불가</i><span>좌측면 장공이 절곡선을 3.2mm 침범합니다</span></div>
+    <div class="g y"><i>확인 필요</i><span>1.6T 기준 최소 플랜지 8mm — 현재 6mm</span></div>
+    <div class="g n"><i>참고</i><span>전개 치수 1,412 × 806 — 1219×2438 판재 1장</span></div>
+  </div>
+  <div class="act"><div class="btn">전개도</div><div class="btn p">컨펌 이미지 보내기</div></div>
+</div>
+</body></html>

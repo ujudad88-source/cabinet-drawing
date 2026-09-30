@@ -1,0 +1,115 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8">
+<title>C 절곡기 조작반</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;500;700;900&family=Chakra+Petch:wght@500;600;700&display=swap">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#4a5054;font-family:"Gothic A1",sans-serif;padding:44px 28px 28px;display:flex;gap:26px;align-items:flex-start}
+.tag{position:absolute;top:12px;left:30px;font:700 13px/1 "Chakra Petch",monospace;letter-spacing:.14em;color:#191c1e;background:#ffb020;padding:7px 11px}
+.ph{width:372px;height:806px;overflow:hidden;position:relative;background:#191c1e;color:#d9dee0;
+  box-shadow:0 0 0 2px #0d0f10,0 16px 36px rgba(0,0,0,.55)}
+.bar{background:#101315;padding:12px 15px;display:flex;align-items:center;gap:11px;border-bottom:2px solid #2b3134}
+.bar .led{width:9px;height:9px;border-radius:50%;background:#35c46a;box-shadow:0 0 9px #35c46a;flex:none}
+.bar h1{font:700 15px/1.1 "Gothic A1";letter-spacing:.05em;color:#eef1f2}
+.bar .rd{margin-left:auto;font:600 11px/1 "Chakra Petch",monospace;letter-spacing:.14em;color:#ffb020}
+.hd{padding:19px 15px 13px}
+.hd .q{font:900 25px/1.26 "Gothic A1";color:#eef1f2}
+.hd .q i{font-style:normal;color:#ffb020}
+.keys{padding:0 15px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.key{background:#23282b;border:1px solid #363d41;border-top-color:#4a5357;padding:14px 12px 12px;position:relative;
+  box-shadow:0 4px 0 #0e1011,inset 0 1px 0 rgba(255,255,255,.07)}
+.key svg{width:34px;height:34px;color:#8d989d;display:block;margin-bottom:9px}
+.key b{display:block;font:900 14.5px/1.2 "Gothic A1";letter-spacing:.02em;color:#eef1f2}
+.key s{display:block;text-decoration:none;font:400 10.5px/1.45 "Gothic A1";color:#7d878c;margin-top:5px}
+.key u{position:absolute;right:10px;top:11px;text-decoration:none;font:600 8.5px/1 "Chakra Petch",monospace;letter-spacing:.14em;color:#5e686d}
+.key.on{border-color:#ffb020;background:#2a2b24}
+.key.on svg{color:#ffb020}
+.key.on u{color:#ffb020}
+.res{margin:13px 15px 0;background:#101315;border:1px solid #2b3134;padding:11px 12px;display:flex;align-items:center;gap:10px}
+.res .lb{font:600 9px/1 "Chakra Petch",monospace;letter-spacing:.14em;color:#6d777c}
+.res .v{margin-left:auto;font:600 12px/1 "Chakra Petch",monospace;color:#35c46a;letter-spacing:.06em}
+.foot{margin:12px 15px 0;font:400 9.5px/1.6 "Gothic A1";color:#697378}
+/* 작업 화면 */
+.wbar{background:#101315;padding:11px 14px;display:flex;align-items:center;gap:10px;border-bottom:2px solid #2b3134}
+.wbar .bk{font:700 15px/1 "Gothic A1";color:#8d989d}
+.wbar b{font:700 14px/1 "Gothic A1";letter-spacing:.05em;color:#eef1f2}
+.wbar .sp{margin-left:auto;display:flex;gap:7px}
+.wbar .sp span{font:600 9.5px/1 "Chakra Petch",monospace;letter-spacing:.1em;padding:7px 9px;background:#23282b;border:1px solid #363d41;color:#9ba5aa}
+.wbar .sp span.y{background:#ffb020;border-color:#ffb020;color:#191c1e;font-weight:700}
+.sech{display:flex;align-items:center;gap:9px;padding:9px 14px;background:#15181a;border-top:1px solid #2b3134;border-bottom:1px solid #2b3134}
+.sech i{font-style:normal;width:7px;height:7px;border-radius:50%;background:#ffb020;box-shadow:0 0 7px rgba(255,176,32,.7);flex:none}
+.sech b{font:700 12.5px/1 "Gothic A1";letter-spacing:.06em;flex:1;color:#cdd4d7}
+.sech em{font-style:normal;font:400 15px/1 "Gothic A1";color:#697378}
+.dims{padding:12px 14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+.dim{background:#0b0e0f;border:1px solid #2b3134;padding:8px 9px 9px;text-align:center}
+.dim span{display:block;font:600 8px/1 "Chakra Petch",monospace;letter-spacing:.16em;color:#697378;margin-bottom:6px}
+.dim strong{font:700 25px/1 "Chakra Petch",monospace;color:#ffb020;letter-spacing:.01em;text-shadow:0 0 12px rgba(255,176,32,.45)}
+.dim small{font:500 10px/1 "Chakra Petch",monospace;color:#7d878c}
+.dim.f{border-color:#ffb020}
+.pv{margin:0 14px;background:#0b0e0f;border:1px solid #2b3134;padding:10px;position:relative}
+.pv .lb{position:absolute;left:11px;top:9px;font:600 8.5px/1 "Chakra Petch",monospace;letter-spacing:.16em;color:#6d777c}
+.pv .zm{position:absolute;right:11px;top:9px;font:600 9px/1 "Chakra Petch",monospace;color:#6d777c}
+.pv svg{display:block;width:100%;height:182px;margin-top:12px}
+.grade{padding:12px 14px 0;display:flex;flex-direction:column;gap:7px}
+.g{display:flex;align-items:center;gap:10px;padding:9px 11px;background:#15181a;border:1px solid #2b3134;border-left-width:4px}
+.g i{font-style:normal;font:700 8.5px/1 "Chakra Petch",monospace;letter-spacing:.12em;flex:none}
+.g span{font:400 10.5px/1.35 "Gothic A1";color:#b4bdc1}
+.g.r{border-left-color:#e03b2f;background:#201414}.g.r i{color:#e03b2f}
+.g.y{border-left-color:#ffb020}.g.y i{color:#ffb020}
+.g.n{border-left-color:#4f585c}.g.n i{color:#7d878c}
+.act{padding:13px 14px 16px;display:flex;gap:9px}
+.btn{flex:1;text-align:center;padding:15px 4px;background:#23282b;border:1px solid #363d41;border-top-color:#4a5357;box-shadow:0 4px 0 #0e1011;font:700 13px/1 "Gothic A1";color:#cdd4d7}
+.btn.p{background:#35c46a;border-color:#35c46a;box-shadow:0 4px 0 #17703c;color:#0b1a10;font-weight:900}
+</style></head><body>
+<div class="tag">시안 C · 절곡기 조작반</div>
+
+<div class="ph">
+  <div class="bar"><div class="led"></div><h1>광전기통신 영업 지원</h1><div class="rd">READY</div></div>
+  <div class="hd"><div class="q">무엇을<br><i>돌리시겠어요?</i></div></div>
+  <div class="keys">
+    <div class="key on"><svg viewBox="0 0 120 90" fill="none" stroke="currentColor" stroke-width="3"><polygon points="34,20 78,20 70,12 26,12"/><polygon points="34,20 34,80 26,72 26,12"/><rect x="34" y="20" width="44" height="60"/><line x1="34" y1="70" x2="78" y2="70"/></svg>
+      <b>손도면 제작</b><s>치수·부속 → 외형도 · 전개도 · 가공표</s><u>F1</u></div>
+    <div class="key"><svg viewBox="0 0 120 90" fill="none" stroke="currentColor" stroke-width="3"><rect x="36" y="8" width="48" height="76"/><rect x="41" y="14" width="38" height="8"/><rect x="41" y="25" width="38" height="8"/><rect x="41" y="36" width="38" height="14"/></svg>
+      <b>캐비닛 랙 실장</b><s>19인치 랙 U 단위 실장도 · 내역서</s><u>F2</u></div>
+    <div class="key"><svg viewBox="0 0 120 90" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"><path d="M22 62 L22 40 L58 22 L58 44 Z"/><path d="M58 44 L58 22 L98 34 L98 56 Z"/><path d="M22 62 L58 44 L98 56"/></svg>
+      <b>판금 접기</b><s>접어 보이고 발주처 컨펌 받기</s><u>F3</u></div>
+    <div class="key"><svg viewBox="0 0 120 90" fill="none" stroke="currentColor" stroke-width="3"><path d="M26 16h50a6 6 0 0 1 6 6v28a6 6 0 0 1-6 6H46L32 68V56h-6a6 6 0 0 1-6-6V22a6 6 0 0 1 6-6z"/><circle cx="86" cy="60" r="12"/></svg>
+      <b>영업 문구 도우미</b><s>표현 찾고 문장 다듬기</s><u>F4</u></div>
+  </div>
+  <div class="res"><div class="lb">LAST JOB</div><div class="v">판금 접기 · 09/29 17:42 ↺</div></div>
+  <div class="foot">손도면 제작은 항상 빈 상태로 시작합니다. 직전 작업은 위 버튼이나<br>메뉴의 보관함 · 작업 파일에서 불러올 수 있습니다.</div>
+</div>
+
+<div class="ph">
+  <div class="wbar"><span class="bk">←</span><b>판금 접기</b><div class="sp"><span>UNDO 3</span><span class="y">저장</span></div></div>
+  <div class="sech"><i></i><b>바탕 판재</b><em>−</em></div>
+  <div class="dims">
+    <div class="dim"><span>W</span><strong>600</strong></div>
+    <div class="dim"><span>D</span><strong>400</strong></div>
+    <div class="dim f"><span>T</span><strong>1.6<small>T</small></strong></div>
+  </div>
+  <div class="sech"><i></i><b>접기 · 타공</b><em>−</em></div>
+  <div class="pv">
+    <div class="lb">PREVIEW / ISO-R</div><div class="zm">100%</div>
+    <svg viewBox="0 0 320 182">
+      <g stroke="#2b3134" stroke-width="1" fill="none"><path d="M16 156 L304 156"/></g>
+      <g stroke="#d9dee0" stroke-width="1.6" stroke-linejoin="round">
+        <path d="M58 128 L58 58 L170 26 L170 96 Z" fill="#2c3337"/>
+        <path d="M170 96 L170 26 L274 55 L274 125 Z" fill="#394247"/>
+        <path d="M58 58 L170 26 L274 55 L162 89 Z" fill="#49545a"/>
+      </g>
+      <g stroke="#ffb020" stroke-width="2" stroke-dasharray="7 4" fill="none"><path d="M170 26 L170 96"/></g>
+      <g fill="#0b0e0f" stroke="#ffb020" stroke-width="1.4"><ellipse cx="206" cy="67" rx="9" ry="5"/><ellipse cx="234" cy="75" rx="9" ry="5"/></g>
+      <g stroke="#e03b2f" stroke-width="2" fill="none"><rect x="84" y="86" width="30" height="22"/></g>
+      <g stroke="#ffb020" stroke-width="1"><path d="M58 142 L274 142 M58 137 L58 147 M274 137 L274 147"/></g>
+      <rect x="150" y="133" width="34" height="15" fill="#0b0e0f"/>
+      <text x="167" y="145" text-anchor="middle" fill="#ffb020" font-family="Chakra Petch,monospace" font-size="11" font-weight="700">600</text>
+    </svg>
+  </div>
+  <div class="grade">
+    <div class="g r"><i>제작 불가</i><span>좌측면 장공이 절곡선을 3.2mm 침범합니다</span></div>
+    <div class="g y"><i>확인 필요</i><span>1.6T 기준 최소 플랜지 8mm — 현재 6mm</span></div>
+    <div class="g n"><i>참고</i><span>전개 1,412 × 806 — 1219×2438 판재 1장</span></div>
+  </div>
+  <div class="act"><div class="btn">전개도</div><div class="btn p">컨펌 이미지 보내기</div></div>
+</div>
+</body></html>
