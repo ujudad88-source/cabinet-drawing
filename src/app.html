@@ -38,7 +38,7 @@
 }
 *{box-sizing:border-box}
 body{background-color:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;
-  -webkit-text-size-adjust:100%;word-break:keep-all;overflow-wrap:anywhere;
+  -webkit-text-size-adjust:100%;word-break:keep-all;overflow-wrap:break-word;
   /* 아연도 강판 스팽글 — 소지 자체의 결 */
   background-image:
     radial-gradient(42px 28px at 11% 9%,var(--spangle),transparent 72%),
@@ -63,13 +63,22 @@ body{background-color:var(--bg);color:var(--ink);font-family:var(--sans);font-si
   padding:12px 14px 11px;padding-top:calc(12px + env(safe-area-inset-top))}
 .top h1{color:#f5f7f8}
 .top .sub{color:#94a1a9}
+.top .ttl{flex:1 1 auto;min-width:0}
 .top .mark{border-color:#eef1f3;background:transparent}
 .top .mark::after{background:#eef1f3}
 .mark{width:30px;height:30px;flex:none;border:2px solid var(--ink);border-radius:0;position:relative;background:var(--panel)}
 .mark::before{content:"";position:absolute;inset:4px;background:var(--mark)}
 .mark::after{content:"";position:absolute;left:4px;right:4px;top:13px;height:2px;background:var(--ink)}
-.top h1{font-size:17px;font-weight:900;letter-spacing:.01em;margin:0;line-height:1.2}
-@media(max-width:400px){.top h1{font-size:15.5px}}
+.top h1{font-size:17px;font-weight:900;letter-spacing:.01em;margin:0;line-height:1.22}
+/* 좁은 화면 — 제목이 버튼에 밀려 낱자로 깨지지 않게 두 줄로 나눈다.
+   버튼 글자를 지우는 대신 줄을 늘린다. 장갑 끼고 읽는 화면이다. */
+@media(max-width:430px){
+  .top{flex-wrap:wrap;gap:8px;row-gap:9px}
+  .top .ttl{flex:1 1 calc(100% - 38px)}
+  .top h1{font-size:15.5px}
+  .top .topb{flex:1 1 0;min-width:0;padding:9px 8px;font-size:13px}
+  .top .mark{width:26px;height:26px}
+}
 .top .sub{font-size:11.5px;color:var(--ink-3);letter-spacing:.14em;font-family:var(--sans);font-weight:700;letter-spacing:.05em}
 
 /* ── 도면 시트 ── */
@@ -471,6 +480,50 @@ body.in-app #home,body.in-app #rack,body.in-app #talk,body.in-app #bend{display:
 .top .topb.dark{background:var(--mark);border-color:var(--mark);color:var(--mark-ink);font-weight:900}
 .top .topb:hover,.top .topb:focus-visible{border-color:var(--mark);color:var(--mark);outline:none}
 .top .topb.dark:hover,.top .topb.dark:focus-visible{background:#fff;border-color:#fff;color:var(--mark-ink)}
+
+/* ══ 손가락으로 누르는 크기 ══════════════════════════════════════════
+   현장에서 장갑 끼고 서서 누른다. 눌린 것이 손에 보여야 한다. */
+button,.btn,.chip,summary,[role="button"]{touch-action:manipulation}
+.btn{min-height:42px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.gho{min-height:34px}
+.chip{min-height:38px;display:inline-flex;align-items:center}
+.pal button{min-height:44px}
+.stp button{width:40px;min-height:42px;font-size:20px;font-weight:700}
+.prow .ic{width:38px;height:38px}
+.zoombar .btn{min-height:36px}
+.zoombar .btn.ib{min-height:36px}
+.bhole button,.bpath button,.tfix button,.tcard .act button,.brev .ac button,
+.urow button,.dimbar button,.alignbar button,.bside button.tg,.gadd{min-height:34px;padding-inline:11px}
+/* 눌리는 반응 — 노랑 버튼은 그림자가 빠지며 내려앉고, 나머지는 1px 들어간다 */
+.btn:not(.pri):not(:disabled):active,.chip:active,.pal button:active,
+.stp button:active,.bsteps button:active,.htile:active{transform:translateY(1px)}
+.stp button:active,.pal button:active{background:var(--accent-soft)}
+.btn:disabled{opacity:.4}
+
+/* ══ 섹션 머리가 따라온다 ════════════════════════════════════════════
+   긴 입력칸을 내려가도 지금 어느 단계인지 늘 보인다. */
+.shd{position:sticky;top:0;z-index:5}
+section{scroll-margin-top:52px}
+@media(min-width:1040px){.colA .shd{position:static}}
+
+/* ══ 모두 접기 / 펼치기 ══════════════════════════════════════════════ */
+.foldbar{display:flex;align-items:center;gap:7px;margin:0 0 10px}
+.foldbar .sp{flex:1}
+.fbtn{font:inherit;font-size:12.5px;font-weight:700;min-height:34px;padding:5px 11px;
+  border:1.5px solid var(--line);border-radius:0;background:var(--panel);color:var(--ink-2);
+  cursor:pointer;white-space:nowrap;touch-action:manipulation}
+.fbtn:hover,.fbtn:focus-visible{border-color:var(--ink);color:var(--ink)}
+.fbtn:active{transform:translateY(1px);background:var(--accent-soft)}
+.fbtn b{font-weight:700;font-family:var(--stencil);font-size:10px;letter-spacing:.06em;
+  background:var(--ink);color:var(--panel);padding:3px 5px;line-height:1;margin-right:1px}
+
+/* ══ 맨 위로 ═════════════════════════════════════════════════════════ */
+#toTop{position:fixed;right:12px;bottom:calc(92px + env(safe-area-inset-bottom));z-index:45;
+  width:46px;height:46px;border:2px solid var(--ink);border-radius:0;background:var(--mark);
+  color:var(--mark-ink);font:900 19px/1 var(--sans);cursor:pointer;box-shadow:3px 3px 0 var(--ink);
+  opacity:0;pointer-events:none;transition:opacity .18s ease;touch-action:manipulation}
+#toTop.on{opacity:1;pointer-events:auto}
+#toTop:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--ink)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 
@@ -539,7 +592,7 @@ body.in-app #home,body.in-app #rack,body.in-app #talk,body.in-app #bend{display:
  <div class="bwrap">
   <div class="top">
     <div class="mark" aria-hidden="true"></div>
-    <div style="flex:1;min-width:0"><h1>판금 접기</h1></div>
+    <div class="ttl"><h1>판금 접기</h1></div>
     <button class="btn topb" id="bendBack" aria-label="홈으로">⌂ 홈</button>
     <button class="btn topb dark" id="bendHelp" aria-label="사용법">? 사용법</button>
   </div>
@@ -735,7 +788,7 @@ body.in-app #home,body.in-app #rack,body.in-app #talk,body.in-app #bend{display:
  <div class="twrap">
   <div class="top">
     <div class="mark" aria-hidden="true"></div>
-    <div style="flex:1;min-width:0"><h1>영업 문구 도우미</h1></div>
+    <div class="ttl"><h1>영업 문구 도우미</h1></div>
     <button class="btn topb" id="talkBack" aria-label="홈으로">⌂ 홈</button>
     <button class="btn topb dark" id="talkHelp" aria-label="사용법">? 사용법</button>
   </div>
@@ -755,7 +808,7 @@ body.in-app #home,body.in-app #rack,body.in-app #talk,body.in-app #bend{display:
   </section>
 
   <section id="tFixBox" hidden>
-    <div class="shd"><h2>보낼 문장</h2><span class="note" id="tLen"></span></div>
+    <div class="shd"><h2 data-fold="tk1">보낼 문장</h2><span class="note" id="tLen"></span></div>
     <textarea id="tText" placeholder="카톡·문자에 보낼 문장을 그대로 붙여 넣으세요."></textarea>
     <div class="row">
       <button class="btn pri" id="tCheck" style="flex:1">다듬을 곳 찾기</button>
@@ -782,7 +835,7 @@ body.in-app #home,body.in-app #rack,body.in-app #talk,body.in-app #bend{display:
   </section>
 
   <section id="tMailBox" hidden>
-    <div class="shd"><h2>제목 찾기</h2><span class="note">상황을 고르면 제목과 본문이 따라옵니다</span></div>
+    <div class="shd"><h2 data-fold="tk2">제목 찾기</h2><span class="note">상황을 고르면 제목과 본문이 따라옵니다</span></div>
     <div class="tsearch">
       <input id="tSQ" placeholder="견적 · 지연 · 독촉 · 인사 · 입금 …" autocomplete="off">
       <button class="btn gho" id="tSClear">지움</button>
@@ -817,7 +870,7 @@ body.in-app #home,body.in-app #rack,body.in-app #talk,body.in-app #bend{display:
   </section>
 
   <section id="tReadBox" hidden>
-    <div class="shd"><h2>받은 말</h2><span class="note">고객이 보낸 문장을 붙여 넣으세요</span></div>
+    <div class="shd"><h2 data-fold="tk3">받은 말</h2><span class="note">고객이 보낸 문장을 붙여 넣으세요</span></div>
     <textarea id="tRText" placeholder="예: 검토해 보고 연락드릴게요"></textarea>
     <div class="row">
       <button class="btn pri" id="tRGo" style="flex:1">속뜻 보기</button>
@@ -828,7 +881,7 @@ body.in-app #home,body.in-app #rack,body.in-app #talk,body.in-app #bend{display:
   </section>
 
   <section id="tSynBox" hidden>
-    <div class="shd"><h2>유의어 고르기</h2><span class="note">낱말 하나를 치면 비슷한 말이 다 나옵니다</span></div>
+    <div class="shd"><h2 data-fold="tk4">유의어 고르기</h2><span class="note">낱말 하나를 치면 비슷한 말이 다 나옵니다</span></div>
     <div class="tsearch">
       <input id="tYQ" placeholder="안목 · 검토 · 도움 · 노력 · 알림 …" autocomplete="off">
       <button class="btn gho" id="tYClear">지움</button>
@@ -840,7 +893,7 @@ body.in-app #home,body.in-app #rack,body.in-app #talk,body.in-app #bend{display:
   </section>
 
   <section id="tHanBox" hidden>
-    <div class="shd"><h2>한자어 · 공문 말</h2><span class="note">공문에서 만나는 말의 쉬운 뜻</span></div>
+    <div class="shd"><h2 data-fold="tk5">한자어 · 공문 말</h2><span class="note">공문에서 만나는 말의 쉬운 뜻</span></div>
     <div class="tsearch">
       <input id="tHQ" placeholder="귀사 · 상기 · 기성 · 하자담보 …" autocomplete="off">
       <button class="btn gho" id="tHClear">지움</button>
@@ -849,7 +902,7 @@ body.in-app #home,body.in-app #rack,body.in-app #talk,body.in-app #bend{display:
   </section>
 
   <section id="tTplBox" hidden>
-    <div class="shd"><h2>문구 틀</h2><span class="note">누르면 문장 다듬기로 옮겨집니다</span></div>
+    <div class="shd"><h2 data-fold="tk6">문구 틀</h2><span class="note">누르면 문장 다듬기로 옮겨집니다</span></div>
     <div class="grid" style="margin-bottom:11px">
       <div class="f"><label for="tvSite">현장·업체</label><input id="tvSite" placeholder="OO빌딩"></div>
       <div class="f"><label for="tvName">상대 이름</label><input id="tvName" placeholder="김과장"></div>
@@ -862,7 +915,7 @@ body.in-app #home,body.in-app #rack,body.in-app #talk,body.in-app #bend{display:
   </section>
 
   <section id="tMineBox" hidden>
-    <div class="shd"><h2>내 표현</h2><span class="note" id="tMineNote"></span></div>
+    <div class="shd"><h2 data-fold="tk7">내 표현</h2><span class="note" id="tMineNote"></span></div>
     <div class="grid">
       <div class="f wide"><label for="tmW">표현</label><input id="tmW" placeholder="예: 검토 후 회신 드리겠습니다"></div>
       <div class="f"><label for="tmG">상황</label><select id="tmG"></select></div>
@@ -908,7 +961,7 @@ body.in-app #home,body.in-app #rack,body.in-app #talk,body.in-app #bend{display:
  <div class="rwrap">
   <div class="top">
     <div class="mark" aria-hidden="true"></div>
-    <div style="flex:1;min-width:0"><h1>캐비닛 랙 실장</h1></div>
+    <div class="ttl"><h1>캐비닛 랙 실장</h1></div>
     <button class="btn topb" id="rackBack" aria-label="홈으로">⌂ 홈</button>
     <button class="btn topb dark" id="rackHelp" aria-label="사용법">? 사용법</button>
   </div>
@@ -937,7 +990,7 @@ body.in-app #home,body.in-app #rack,body.in-app #talk,body.in-app #bend{display:
   </div><div class="colB">
 
   <section>
-    <div class="shd"><h2>랙 목록</h2><span class="note" id="rackNote"></span></div>
+    <div class="shd"><h2 data-fold="rk1">랙 목록</h2><span class="note" id="rackNote"></span></div>
     <div class="chips" id="rackChips"></div>
     <div class="grid" style="margin-top:11px">
       <div class="f wide"><label for="rName">랙 이름</label><input id="rName" placeholder="예: 통신랙 A"></div>
@@ -957,7 +1010,7 @@ body.in-app #home,body.in-app #rack,body.in-app #talk,body.in-app #bend{display:
   </section>
 
   <section>
-    <div class="shd"><h2>장비 올리기</h2><span class="note">누르면 빈 자리에 올라갑니다</span></div>
+    <div class="shd"><h2 data-fold="rk2">장비 올리기</h2><span class="note">누르면 빈 자리에 올라갑니다</span></div>
     <div class="chips" id="rLib"></div>
     <div class="row" style="margin-top:9px">
       <button class="chip add" id="rLibAdd">+ 장비 직접 등록</button>
@@ -967,18 +1020,18 @@ body.in-app #home,body.in-app #rack,body.in-app #talk,body.in-app #bend{display:
   </section>
 
   <section>
-    <div class="shd"><h2>실장 목록</h2><span class="note" id="rItemNote"></span></div>
+    <div class="shd"><h2 data-fold="rk3">실장 목록</h2><span class="note" id="rItemNote"></span></div>
     <div id="rWarn"></div>
     <div class="plist" id="rItems"></div>
   </section>
 
   <section>
-    <div class="shd"><h2>산출</h2><span class="note" id="rCalcNote"></span></div>
+    <div class="shd"><h2 data-fold="rk4">산출</h2><span class="note" id="rCalcNote"></span></div>
     <div class="stats" id="rStats"></div>
   </section>
 
   <section>
-    <div class="shd"><h2>도면 정보</h2><span class="note">표제란에 들어갑니다</span></div>
+    <div class="shd"><h2 data-fold="rk5">도면 정보</h2><span class="note">표제란에 들어갑니다</span></div>
     <div class="grid">
       <div class="f wide"><label for="rSite">현장명</label><input id="rSite" placeholder="예: OO빌딩 통신실"></div>
       <div class="f"><label for="rNo">도면번호</label><input id="rNo"></div>
@@ -1081,7 +1134,7 @@ body.in-app #home,body.in-app #rack,body.in-app #talk,body.in-app #bend{display:
 <div class="wrap">
   <div class="top">
     <div class="mark" aria-hidden="true"></div>
-    <div style="flex:1;min-width:0">
+    <div class="ttl">
       <h1>광전기통신 도면 생성</h1>
     </div>
     <button class="btn topb" id="homeBtn" aria-label="홈으로">⌂ 홈</button>
@@ -7931,6 +7984,104 @@ window.addEventListener("keydown",ev=>{
 });
 window.addEventListener("resize",()=>{if(!$("#bend").hidden)bDrawView();});
 bLoad();
+
+/* ══════════════════════════════════════════════════════════════════
+   사용 편의 — 접기 전체 제어 · 맨 위로 · 길게 눌러 증감 · Enter 로 다음 칸
+   ══════════════════════════════════════════════════════════════════ */
+(function(){
+  const FKEY="cabdraw.v1.fold.";
+
+  /* 접을 수 있는 섹션만 센다 */
+  function secsOf(host){
+    return [...host.querySelectorAll("section")].filter(x=>x.querySelector(".shd h2[data-fold]"));
+  }
+  function label(btn){
+    const host=btn.closest(".wrap,.rwrap,.twrap");
+    if(!host)return;
+    const sec=secsOf(host), open=sec.filter(x=>!x.classList.contains("fold")).length;
+    btn.innerHTML=(open?"모두 접기":"모두 펼치기")+" <b>"+open+"/"+sec.length+"</b>";
+  }
+  function syncAll(){document.querySelectorAll("[data-foldall]").forEach(label);}
+
+  /* 각 화면 상단 바 아래에 한 줄 붙인다 (판금 접기는 자체 버튼이 있다) */
+  document.querySelectorAll(".wrap>.top,.rwrap>.top,.twrap>.top").forEach(t=>{
+    if(!secsOf(t.parentNode).length)return;
+    const d=document.createElement("div");
+    d.className="foldbar";
+    d.innerHTML='<button type="button" class="fbtn" data-foldall></button><span class="sp"></span>';
+    t.insertAdjacentElement("afterend",d);
+    label(d.firstChild);
+  });
+
+  document.addEventListener("click",ev=>{
+    const b=ev.target.closest&&ev.target.closest("[data-foldall]");
+    if(!b)return;
+    const host=b.closest(".wrap,.rwrap,.twrap"); if(!host)return;
+    const sec=secsOf(host), shut=sec.some(x=>!x.classList.contains("fold"));
+    sec.forEach(x=>{
+      x.classList.toggle("fold",shut);
+      const h=x.querySelector(".shd h2[data-fold]");
+      if(h){try{localStorage.setItem(FKEY+h.dataset.fold,shut?"1":"0");}catch(e){}}
+    });
+    label(b);
+    if(!shut)window.scrollTo({top:0,behavior:"smooth"});
+  });
+  /* 섹션 하나를 직접 접어도 숫자가 맞게 */
+  document.addEventListener("click",ev=>{
+    if(ev.target.closest&&ev.target.closest(".shd h2[data-fold]"))setTimeout(syncAll,0);
+  });
+
+  /* ── 맨 위로 ─────────────────────────────────────────────── */
+  const up=document.createElement("button");
+  up.id="toTop"; up.type="button"; up.textContent="↑";
+  up.setAttribute("aria-label","맨 위로");
+  document.body.appendChild(up);
+  up.addEventListener("click",()=>window.scrollTo({top:0,behavior:"smooth"}));
+  let tk=false;
+  window.addEventListener("scroll",()=>{
+    if(tk)return; tk=true;
+    requestAnimationFrame(()=>{
+      up.classList.toggle("on",window.scrollY>620&&!document.body.classList.contains("fs"));
+      tk=false;
+    });
+  },{passive:true});
+
+  /* ── 길게 누르면 계속 증감 ───────────────────────────────── */
+  const STEP="[data-step],[data-bstep],[data-secstep]";
+  let hold=null,tick=null;
+  function letGo(){clearTimeout(hold);clearInterval(tick);hold=tick=null;}
+  document.addEventListener("pointerdown",ev=>{
+    const b=ev.target.closest&&ev.target.closest(STEP);
+    if(!b)return;
+    letGo();
+    hold=setTimeout(()=>{
+      tick=setInterval(()=>{
+        if(!document.contains(b)){letGo();return;}
+        b.click();
+      },90);
+    },430);
+  });
+  ["pointerup","pointercancel","pointerleave","contextmenu","blur"]
+    .forEach(e=>window.addEventListener(e,letGo,true));
+
+  /* ── 숫자 칸에서 Enter 를 누르면 다음 숫자 칸으로 ────────── */
+  document.addEventListener("keydown",ev=>{
+    if(ev.key!=="Enter"||ev.isComposing)return;
+    const el=ev.target;
+    if(!el||el.tagName!=="INPUT"||el.getAttribute("inputmode")!=="numeric")return;
+    const all=[...document.querySelectorAll('input[inputmode="numeric"]')]
+      .filter(x=>!x.disabled&&!x.readOnly&&x.offsetParent!==null);
+    const i=all.indexOf(el);
+    if(i<0)return;
+    ev.preventDefault();
+    el.blur();
+    const nx=all[i+1];
+    if(nx){nx.focus();try{nx.select();}catch(e){}}
+  });
+
+  window.addEventListener("pageshow",syncAll);
+  setTimeout(syncAll,300);
+})();
 
 migrate(S); render(); boot();
 </script>
